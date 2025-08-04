@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通信控制台</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: 'Inter', 'Microsoft YaHei', 'Segoe UI', Arial, sans-serif;
+    }
+
+    .status-indicator {
+      animation: pulse 2s infinite;
+    }
+
+    .status-indicator.connected {
+      background-color: #10b981 !important;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .tab-button {
+      transition: all 0.15s ease-in-out;
+    }
+
+    .tab-button.active {
+      background: rgba(59, 130, 246, 0.8) !important;
+      color: white !important;
+      backdrop-filter: blur(10px);
+    }
+
+    .form-control {
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      transition: all 0.15s ease-in-out;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: rgba(59, 130, 246, 0.5);
+      box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .btn {
+      transition: all 0.15s ease-in-out;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .output-area {
+      background: rgba(30, 30, 30, 0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .log-entry {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .log-entry.success {
+      color: #10b981;
+    }
+
+    .log-entry.error {
+      color: #ef4444;
+    }
+
+    .log-entry.info {
+      color: #3b82f6;
+    }
+
+    .timestamp {
+      color: #9ca3af;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+  </style>
+</head>
+
+<body
+  class="min-h-full flex items-center justify-center lg:py-10 lg:px-6 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 pt-6 pr-4 pb-6 pl-4">
+  <div class="fixed top-0 w-full h-screen bg-cover bg-center -z-10"
+    style="background-image: url('https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/44dea03b-7cbb-41b6-934f-6482f1fdf2e3_3840w.jpg');">
+  </div>
+
+  <div
+    class="relative w-full max-w-[1440px] lg:rounded-3xl overflow-hidden lg:mx-8 shadow-black/10 bg-white/20 border-white/30 border rounded-2xl mr-4 ml-4 shadow-[0_2.8px_2.2px_rgba(0,_0,_0,_0.034),_0_6.7px_5.3px_rgba(0,_0,_0,_0.048),_0_12.5px_10px_rgba(0,_0,_0,_0.06),_0_22.3px_17.9px_rgba(0,_0,_0,_0.072),_0_41.8px_33.4px_rgba(0,_0,_0,_0.086),_0_100px_80px_rgba(0,_0,_0,_0.12)] backdrop-blur-xl">
+
+    <!-- Header -->
+    <header
+      class="flex sm:px-6 lg:px-12 lg:py-5 pt-4 pr-4 pb-4 pl-4 items-center justify-between border-b border-white/20">
+      <div class="flex items-center gap-3">
+        <span class="text-xl lg:text-2xl font-semibold">🔌</span>
+        <span class="text-lg lg:text-xl font-semibold tracking-tight text-slate-800">通信控制台</span>
+      </div>
+      <div class="flex items-center gap-3 lg:gap-4">
+        <!-- Connection Status -->
+        <div class="flex items-center gap-2">
+          <div class="status-indicator w-3 h-3 rounded-full bg-red-500" id="status-indicator"></div>
+          <span class="text-sm text-slate-700" id="status-text">未连接</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex h-[calc(100vh-120px)]">
+      <!-- 侧边栏配置区域 -->
+      <div class="w-80 bg-white/30 border-r border-white/20 p-6 overflow-y-auto backdrop-blur-sm">
+
+        <!-- 通信类型选择 -->
+        <div class="flex mb-6 bg-white/20 rounded-lg p-1 backdrop-blur-sm">
+          <button class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-md bg-blue-500/80 text-white"
+            onclick="switchTab('com')">COM串口</button>
+          <button class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-md text-slate-600"
+            onclick="switchTab('udp')">UDP网络</button>
+        </div>
+
+        <!-- COM配置 -->
+        <div id="com-tab" class="tab-content">
+          <div class="mb-6 p-4 bg-white/40 border-white/30 border rounded-xl backdrop-blur-md">
+            <h3 class="flex items-center gap-2 text-base font-semibold mb-4 text-slate-800">
+              <i data-lucide="usb" class="w-4 h-4"></i>
+              COM串口配置
+            </h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">端口号</label>
+                <select class="form-control w-full px-3 py-2 rounded-lg text-sm" id="com-port">
+                  <option value="COM1">COM1</option>
+                  <option value="COM2">COM2</option>
+                  <option value="COM3" selected>COM3</option>
+                  <option value="COM4">COM4</option>
+                  <option value="COM5">COM5</option>
+                  <option value="COM6">COM6</option>
+                  <option value="COM7">COM7</option>
+                  <option value="COM8">COM8</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">波特率</label>
+                <select class="form-control w-full px-3 py-2 rounded-lg text-sm" id="com-baudrate">
+                  <option value="9600">9600</option>
+                  <option value="19200">19200</option>
+                  <option value="38400">38400</option>
+                  <option value="57600">57600</option>
+                  <option value="115200" selected>115200</option>
+                  <option value="230400">230400</option>
+                </select>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">数据位</label>
+                  <select class="form-control w-full px-3 py-2 rounded-lg text-sm" id="com-databits">
+                    <option value="7">7</option>
+                    <option value="8" selected>8</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">停止位</label>
+                  <select class="form-control w-full px-3 py-2 rounded-lg text-sm" id="com-stopbits">
+                    <option value="1" selected>1</option>
+                    <option value="1.5">1.5</option>
+                    <option value="2">2</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">校验位</label>
+                <select class="form-control w-full px-3 py-2 rounded-lg text-sm" id="com-parity">
+                  <option value="none" selected>无校验</option>
+                  <option value="odd">奇校验</option>
+                  <option value="even">偶校验</option>
+                </select>
+              </div>
+              <button class="btn w-full bg-blue-500/80 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600/80"
+                onclick="connectCOM()">连接COM</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- UDP配置 -->
+        <div id="udp-tab" class="tab-content hidden">
+          <div class="mb-6 p-4 bg-white/40 border-white/30 border rounded-xl backdrop-blur-md">
+            <h3 class="flex items-center gap-2 text-base font-semibold mb-4 text-slate-800">
+              <i data-lucide="wifi" class="w-4 h-4"></i>
+              UDP网络配置
+            </h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">远程IP地址</label>
+                <input type="text" class="form-control w-full px-3 py-2 rounded-lg text-sm" id="udp-remote-ip"
+                  value="192.168.1.100" placeholder="192.168.1.100">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">远程端口</label>
+                <input type="number" class="form-control w-full px-3 py-2 rounded-lg text-sm" id="udp-remote-port"
+                  value="8080" placeholder="8080">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">本地IP地址</label>
+                <input type="text" class="form-control w-full px-3 py-2 rounded-lg text-sm" id="udp-local-ip"
+                  value="192.168.1.10" placeholder="192.168.1.10">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">本地端口</label>
+                <input type="number" class="form-control w-full px-3 py-2 rounded-lg text-sm" id="udp-local-port"
+                  value="8081" placeholder="8081">
+              </div>
+              <button class="btn w-full bg-blue-500/80 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600/80"
+                onclick="connectUDP()">连接UDP</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 协议配置 -->
+        <div class="mb-6 p-4 bg-white/40 border-white/30 border rounded-xl backdrop-blur-md">
+          <h3 class="flex items-center gap-2 text-base font-semibold mb-4 text-slate-800">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+            协议配置
+          </h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">协议版本</label>
+              <select class="form-control w-full px-3 py-2 rounded-lg text-sm" id="protocol-version">
+                <option value="1">协议版本 1</option>
+                <option value="2" selected>协议版本 2</option>
+                <option value="3">协议版本 3</option>
+              </select>
+            </div>
+            <button class="btn w-full bg-green-500/80 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600/80"
+              onclick="selectProtocol()">设置协议</button>
+          </div>
+        </div>
+
+        <!-- 动态命令配置 -->
+        <div class="mb-6 p-4 bg-white/40 border-white/30 border rounded-xl backdrop-blur-md">
+          <h3 class="flex items-center gap-2 text-base font-semibold mb-4 text-slate-800">
+            <i data-lucide="terminal" class="w-4 h-4"></i>
+            命令配置
+          </h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">选择命令</label>
+              <select class="form-control w-full px-3 py-2 rounded-lg text-sm" id="command-select">
+                <option value="">请选择命令...</option>
+              </select>
+            </div>
+            <div id="command-info"
+              class="hidden p-3 bg-blue-500/10 border border-blue-200/30 rounded-lg text-xs text-slate-600 backdrop-blur-sm">
+            </div>
+            <div id="param-container" class="hidden space-y-3">
+              <div id="param-fields"></div>
+              <button
+                class="btn w-full bg-blue-500/80 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                id="execute-dynamic-cmd" onclick="executeDynamicCommand()" disabled>执行命令</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 连接控制 -->
+        <div class="p-4 bg-white/40 border-white/30 border rounded-xl backdrop-blur-md">
+          <h3 class="flex items-center gap-2 text-base font-semibold mb-4 text-slate-800">
+            <i data-lucide="power" class="w-4 h-4"></i>
+            连接控制
+          </h3>
+          <button class="btn w-full bg-red-500/80 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600/80"
+            onclick="disconnect()">断开连接</button>
+        </div>
+      </div>
+
+      <!-- 主内容区域 -->
+      <div class="flex-1 flex flex-col">
+        <!-- 命令执行区域 -->
+        <div class="flex-1 p-6">
+          <!-- 命令输入 -->
+          <div class="flex gap-3 mb-6">
+            <input type="text" class="form-control flex-1 px-3 py-2 rounded-lg text-sm" id="command-name"
+              placeholder="输入命令名称，如: getAddress" value="getAddress">
+            <input type="text" class="form-control flex-1 px-3 py-2 rounded-lg text-sm" id="command-params"
+              placeholder="输入参数，用逗号分隔，如: 1,2,3" value="1">
+            <button class="btn bg-blue-500/80 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600/80"
+              onclick="executeCommand()">执行命令</button>
+            <button class="btn bg-green-500/80 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600/80"
+              onclick="clearOutput()">清空输出</button>
+          </div>
+
+          <!-- 返回值显示区域 -->
+          <div id="return-values-container" class="hidden mb-6">
+            <h4 class="flex items-center gap-2 text-sm font-semibold mb-3 text-slate-800">
+              <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+              返回值
+            </h4>
+            <div id="return-values-fields"
+              class="p-4 bg-green-500/10 border border-green-200/30 rounded-xl backdrop-blur-sm"></div>
+          </div>
+
+          <!-- 输出显示区域 -->
+          <div class="flex-1 output-area p-4 rounded-xl font-mono text-sm text-gray-300 overflow-y-auto"
+            id="output-area">
+            <div class="log-entry info mb-2 pb-2">
+              <span class="timestamp text-xs">[系统启动]</span> 通信控制台已启动，请配置连接参数
+            </div>
+            <div class="log-entry info mb-2 pb-2">
+              <span class="timestamp text-xs">[提示]</span> 支持COM串口和UDP网络通信
+            </div>
+            <div class="log-entry info mb-2 pb-2">
+              <span class="timestamp text-xs">[提示]</span> 可以使用快捷命令或手动输入命令执行
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 版本信息 -->
+  <div class="fixed bottom-4 right-4 text-xs text-white/70 bg-black/30 px-3 py-2 rounded-lg backdrop-blur-sm">
+    Node.js: <span id="node-version"></span> | Electron: <span id="electron-version"></span>
+  </div>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // 引入核心模块 - 使用koffi版本
+    const { COM, UDP, getDllPath, getConfigPath } = require('./core-koffi');
+
+    // 设置版本信息
+    document.getElementById('node-version').innerText = process.versions.node;
+    document.getElementById('electron-version').innerText = process.versions.electron;
+
+    // 全局变量
+    let currentConnection = null;
+    let connectionType = 'com';
+    let configData = null;
+
+    // 加载配置数据
+    async function loadConfig() {
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const configPath = path.join(__dirname, 'config.json');
+
+        if (fs.existsSync(configPath)) {
+          const configContent = fs.readFileSync(configPath, 'utf8');
+          configData = JSON.parse(configContent);
+          populateCommandSelect();
+          addLog('配置文件加载成功', 'success');
+        } else {
+          addLog('未找到config.json文件', 'error');
+        }
+      } catch (error) {
+        addLog(`配置加载失败: ${error.message}`, 'error');
+        console.error('配置加载错误:', error);
+      }
+    }
+
+    // 填充命令选择框
+    function populateCommandSelect() {
+      const select = document.getElementById('command-select');
+      select.innerHTML = '<option value="">请选择命令...</option>';
+
+      if (configData && configData.commands) {
+        configData.commands.forEach(command => {
+          const option = document.createElement('option');
+          option.value = command.name;
+          option.textContent = command.name;
+          select.appendChild(option);
+        });
+      }
+    }
+
+    // 命令选择变化处理
+    document.getElementById('command-select').addEventListener('change', function () {
+      const selectedCommand = this.value;
+      if (selectedCommand && configData) {
+        const command = configData.commands.find(cmd => cmd.name === selectedCommand);
+        if (command) {
+          showCommandInfo(command);
+          generateParamFields(command);
+        }
+      } else {
+        hideCommandSections();
+      }
+    });
+
+    // 显示命令信息
+    function showCommandInfo(command) {
+      const infoDiv = document.getElementById('command-info');
+      infoDiv.innerHTML = `
+        <strong>命令:</strong> ${command.name}<br>
+        <strong>CMD1:</strong> ${command.cmd1} | <strong>CMD2:</strong> ${command.cmd2}<br>
+        <strong>参数数量:</strong> ${command.params.length} | <strong>返回值数量:</strong> ${command.returns ? command.returns.length : 0}
+      `;
+      infoDiv.classList.remove('hidden');
+
+      // 生成返回值显示区域
+      generateReturnFields(command);
+    }
+
+    // 生成返回值显示字段
+    function generateReturnFields(command) {
+      const container = document.getElementById('return-values-fields');
+      container.innerHTML = '';
+
+      if (!command.returns || command.returns.length === 0) {
+        container.innerHTML = '<div class="text-center text-slate-600 italic">此命令无返回值</div>';
+        document.getElementById('return-values-container').classList.remove('hidden');
+        return;
+      }
+
+      command.returns.forEach((returnItem, index) => {
+        const returnDiv = document.createElement('div');
+        returnDiv.className = 'flex justify-between items-center p-3 bg-white/60 rounded-lg mb-2 backdrop-blur-sm';
+
+        const returnHtml = generateReturnHtml(returnItem, index);
+        returnDiv.innerHTML = returnHtml;
+
+        container.appendChild(returnDiv);
+      });
+
+      document.getElementById('return-values-container').classList.remove('hidden');
+    }
+
+    // 生成返回值HTML
+    function generateReturnHtml(returnItem, index) {
+      let infoHtml = '';
+
+      // 构建返回值信息
+      if (returnItem.type) infoHtml += `类型: ${returnItem.type} `;
+      if (returnItem.position !== undefined) infoHtml += `位置: ${returnItem.position} `;
+      if (returnItem.positions) infoHtml += `位置: [${returnItem.positions.join(',')}] `;
+
+      return `
+        <div class="flex-1">
+          <div class="font-medium text-slate-800 text-sm">${returnItem.name}:</div>
+          <div class="text-xs text-slate-600">${infoHtml}</div>
+        </div>
+        <div class="px-3 py-1 bg-slate-100 rounded text-sm font-mono text-slate-700" id="return_${index}">等待执行...</div>
+      `;
+    }
+
+    // 生成参数输入字段
+    function generateParamFields(command) {
+      const container = document.getElementById('param-fields');
+      container.innerHTML = '';
+
+      if (command.params.length === 0) {
+        container.innerHTML = '<div class="text-center text-slate-600 italic p-4 bg-white/30 rounded-lg">此命令无需参数</div>';
+        document.getElementById('param-container').classList.remove('hidden');
+        document.getElementById('execute-dynamic-cmd').disabled = false;
+        return;
+      }
+
+      command.params.forEach((param, index) => {
+        const paramDiv = document.createElement('div');
+        paramDiv.className = 'p-3 bg-white/60 rounded-lg backdrop-blur-sm';
+
+        const fieldHtml = generateFieldHtml(param, index);
+        paramDiv.innerHTML = fieldHtml;
+
+        container.appendChild(paramDiv);
+      });
+
+      document.getElementById('param-container').classList.remove('hidden');
+      updateDynamicExecuteButton();
+    }
+
+    // 生成字段HTML
+    function generateFieldHtml(param, index) {
+      let inputHtml = '';
+      let infoHtml = '';
+
+      // 构建参数信息
+      if (param.type) infoHtml += `类型: ${param.type} `;
+      if (param.position !== undefined) infoHtml += `位置: ${param.position} `;
+      if (param.positions) infoHtml += `位置: [${param.positions.join(',')}] `;
+      if (param.min !== undefined) infoHtml += `最小值: ${param.min} `;
+      if (param.max !== undefined) infoHtml += `最大值: ${param.max} `;
+
+      // 根据参数类型和约束生成输入框
+      if (param.allowvalue && param.allowvalue.length > 0) {
+        // 下拉选择
+        inputHtml = `
+          <select class="form-control w-full px-3 py-2 rounded-lg text-sm" id="param_${index}" data-param-name="${param.name}" required>
+            <option value="">请选择...</option>
+            ${param.allowvalue.map(val => `<option value="${val}">${val}</option>`).join('')}
+          </select>
+        `;
+      } else if (param.values && param.values.length > 0) {
+        // 下拉选择（使用values）
+        inputHtml = `
+          <select class="form-control w-full px-3 py-2 rounded-lg text-sm" id="param_${index}" data-param-name="${param.name}" required>
+            <option value="">请选择...</option>
+            ${param.values.map(val => `<option value="${val}">${val}</option>`).join('')}
+          </select>
+        `;
+      } else if (param.type === 'array') {
+        // 数组输入
+        inputHtml = `
+          <input type="text" class="form-control w-full px-3 py-2 rounded-lg text-sm" id="param_${index}" data-param-name="${param.name}" 
+                 placeholder="请输入数组值，用逗号分隔，如: 1,2,3,4,5" required>
+        `;
+      } else {
+        // 普通输入框
+        let inputType = 'text';
+        let step = '';
+        let min = '';
+        let max = '';
+
+        if (param.type === 'int') {
+          inputType = 'number';
+          step = '1';
+        } else if (param.type === 'float') {
+          inputType = 'number';
+          step = '0.01';
+        }
+
+        if (param.min !== undefined) min = `min="${param.min}"`;
+        if (param.max !== undefined) max = `max="${param.max}"`;
+
+        inputHtml = `
+          <input type="${inputType}" class="form-control w-full px-3 py-2 rounded-lg text-sm" id="param_${index}" 
+                 data-param-name="${param.name}" 
+                 ${step ? `step="${step}"` : ''}
+                 ${min} ${max}
+                 placeholder="请输入${param.description || param.name}"
+                 required>
+        `;
+      }
+
+      return `
+        <label class="block text-sm font-medium text-slate-700 mb-2" for="param_${index}">${param.name}:</label>
+        ${inputHtml}
+        <div class="text-xs text-slate-600 mt-1 italic">${param.description || '无描述'}</div>
+        <div class="text-xs text-slate-500 mt-1">${infoHtml}</div>
+      `;
+    }
+
+    // 更新动态执行按钮状态
+    function updateDynamicExecuteButton() {
+      const inputs = document.querySelectorAll('#param-fields input, #param-fields select');
+      let allValid = true;
+
+      inputs.forEach(input => {
+        if (input.hasAttribute('required') && !input.value.trim()) {
+          allValid = false;
+        }
+      });
+
+      document.getElementById('execute-dynamic-cmd').disabled = !allValid;
+    }
+
+    // 监听动态表单输入变化
+    document.addEventListener('input', function (e) {
+      if (e.target.closest('#param-fields')) {
+        updateDynamicExecuteButton();
+      }
+    });
+
+    // 执行动态命令
+    function executeDynamicCommand() {
+      const selectedCommand = document.getElementById('command-select').value;
+      if (!selectedCommand || !configData) {
+        addLog('请先选择命令', 'error');
+        return;
+      }
+
+      const command = configData.commands.find(cmd => cmd.name === selectedCommand);
+      if (!command) {
+        addLog('未找到命令配置', 'error');
+        return;
+      }
+
+      const params = [];
+      const inputs = document.querySelectorAll('#param-fields input, #param-fields select');
+
+      inputs.forEach(input => {
+        const paramName = input.dataset.paramName;
+        let value = input.value.trim();
+
+        // 处理数组类型
+        if (input.type === 'text' && value && command.params.find(p => p.name === paramName)?.type === 'array') {
+          value = value.split(',').map(v => {
+            const trimmed = v.trim();
+            return !isNaN(trimmed) && trimmed !== '' ? parseFloat(trimmed) : trimmed;
+          });
+        } else if (value && !isNaN(value) && value !== '') {
+          // 尝试转换为数字
+          const param = command.params.find(p => p.name === paramName);
+          if (param && (param.type === 'int' || param.type === 'float')) {
+            value = param.type === 'int' ? parseInt(value) : parseFloat(value);
+          }
+        }
+
+        params.push(value);
+      });
+
+      addLog(`执行动态命令: ${selectedCommand}(${params.join(', ')})`, 'info');
+      executeQuickCommand(selectedCommand, params);
+    }
+
+    // 隐藏命令相关部分
+    function hideCommandSections() {
+      document.getElementById('command-info').classList.add('hidden');
+      document.getElementById('param-container').classList.add('hidden');
+      document.getElementById('return-values-container').classList.add('hidden');
+    }
+
+    // 切换标签页
+    function switchTab(type) {
+      // 更新按钮状态
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active', 'bg-blue-500/80', 'text-white');
+        btn.classList.add('text-slate-600');
+      });
+      event.target.classList.add('active', 'bg-blue-500/80', 'text-white');
+      event.target.classList.remove('text-slate-600');
+
+      // 更新内容显示
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+      document.getElementById(type + '-tab').classList.remove('hidden');
+
+      connectionType = type;
+    }
+
+    // 添加日志
+    function addLog(message, type = 'info') {
+      const outputArea = document.getElementById('output-area');
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = document.createElement('div');
+      logEntry.className = `log-entry ${type} mb-2 pb-2`;
+      logEntry.innerHTML = `<span class="timestamp text-xs">[${timestamp}]</span> ${message}`;
+      outputArea.appendChild(logEntry);
+      outputArea.scrollTop = outputArea.scrollHeight;
+    }
+
+    // 更新连接状态
+    function updateStatus(connected, message) {
+      const indicator = document.getElementById('status-indicator');
+      const statusText = document.getElementById('status-text');
+
+      if (connected) {
+        indicator.classList.remove('bg-red-500');
+        indicator.classList.add('connected', 'bg-green-500');
+        statusText.textContent = '已连接';
+        addLog(message, 'success');
+      } else {
+        indicator.classList.remove('connected', 'bg-green-500');
+        indicator.classList.add('bg-red-500');
+        statusText.textContent = '未连接';
+        addLog(message, 'error');
+      }
+    }
+
+    // 连接COM
+    async function connectCOM() {
+      try {
+        addLog('开始连接COM...', 'info');
+
+        // 先断开现有连接
+        if (currentConnection) {
+          addLog('断开现有连接...', 'info');
+          currentConnection.close();
+          currentConnection = null;
+        }
+
+        const port = document.getElementById('com-port').value;
+        const baudrate = parseInt(document.getElementById('com-baudrate').value);
+        const databits = parseInt(document.getElementById('com-databits').value);
+        const stopbits = parseFloat(document.getElementById('com-stopbits').value);
+        const parity = document.getElementById('com-parity').value;
+
+        addLog(`正在连接COM端口: ${port}, 波特率: ${baudrate}...`, 'info');
+
+        // 检查模块是否正确加载
+        if (typeof COM === 'undefined') {
+          throw new Error('COM模块未正确加载，请检查core.js文件');
+        }
+
+        // 创建COM连接
+        addLog('创建COM连接对象...', 'info');
+        currentConnection = new COM(port, baudrate, databits, stopbits, parity);
+        connectionType = 'com';
+
+        updateStatus(true, `COM连接成功: ${port} @ ${baudrate}bps, ${databits}bits, ${stopbits}stop, ${parity}parity`);
+
+      } catch (error) {
+        console.error('COM连接错误:', error);
+        currentConnection = null;
+        updateStatus(false, `COM连接失败: ${error.message}`);
+        addLog(`详细错误信息: ${error.stack}`, 'error');
+      }
+    }
+
+    // 连接UDP
+    async function connectUDP() {
+      try {
+        addLog('开始连接UDP...', 'info');
+
+        // 先断开现有连接
+        if (currentConnection) {
+          addLog('断开现有连接...', 'info');
+          currentConnection.close();
+          currentConnection = null;
+        }
+
+        const remoteIp = document.getElementById('udp-remote-ip').value;
+        const remotePort = parseInt(document.getElementById('udp-remote-port').value);
+        const localIp = document.getElementById('udp-local-ip').value;
+        const localPort = parseInt(document.getElementById('udp-local-port').value);
+
+        addLog(`正在连接UDP: ${remoteIp}:${remotePort} -> ${localIp}:${localPort}...`, 'info');
+
+        // 检查模块是否正确加载
+        if (typeof UDP === 'undefined') {
+          throw new Error('UDP模块未正确加载，请检查core.js文件');
+        }
+
+        // 创建UDP连接
+        addLog('创建UDP连接对象...', 'info');
+        currentConnection = new UDP(remoteIp, remotePort, localIp, localPort);
+        connectionType = 'udp';
+
+        updateStatus(true, `UDP连接成功: ${remoteIp}:${remotePort} -> ${localIp}:${localPort}`);
+
+      } catch (error) {
+        console.error('UDP连接错误:', error);
+        currentConnection = null;
+        updateStatus(false, `UDP连接失败: ${error.message}`);
+        addLog(`详细错误信息: ${error.stack}`, 'error');
+      }
+    }
+
+    // 选择协议
+    function selectProtocol() {
+      const version = parseInt(document.getElementById('protocol-version').value);
+
+      if (!currentConnection) {
+        addLog('请先建立连接', 'error');
+        return;
+      }
+
+      try {
+        currentConnection.selectProtocol(version);
+        addLog(`协议版本已设置为: ${version}`, 'success');
+      } catch (error) {
+        addLog(`协议设置失败: ${error.message}`, 'error');
+      }
+    }
+
+    // 执行命令
+    function executeCommand() {
+      const cmdName = document.getElementById('command-name').value.trim();
+      const paramsStr = document.getElementById('command-params').value.trim();
+
+      if (!cmdName) {
+        addLog('请输入命令名称', 'error');
+        return;
+      }
+
+      if (!currentConnection) {
+        addLog('请先建立连接', 'error');
+        return;
+      }
+
+      // 解析参数
+      let params = [];
+      if (paramsStr) {
+        try {
+          params = paramsStr.split(',').map(p => {
+            const trimmed = p.trim();
+            // 尝试转换为数字
+            if (!isNaN(trimmed) && trimmed !== '') {
+              return parseFloat(trimmed);
+            }
+            return trimmed;
+          });
+        } catch (error) {
+          addLog(`参数解析失败: ${error.message}`, 'error');
+          return;
+        }
+      }
+
+      executeQuickCommand(cmdName, params);
+    }
+
+    // 执行快捷命令
+    function executeQuickCommand(cmdName, params) {
+      if (!currentConnection) {
+        addLog('请先建立连接', 'error');
+        return;
+      }
+
+      addLog(`执行命令: ${cmdName}(${params.join(', ')})`, 'info');
+
+      // 重置返回值显示
+      resetReturnValues();
+
+      try {
+        // 使用实际的命令执行
+        const result = currentConnection.executeCommandJSON(cmdName, params);
+
+        if (result.error) {
+          addLog(`命令执行失败: ${result.error}`, 'error');
+          // 清空返回值显示
+          clearReturnValues();
+        } else {
+          addLog(`命令执行结果: ${JSON.stringify(result, null, 2)}`, 'success');
+          // 更新返回值显示
+          updateReturnValues(cmdName, result);
+        }
+
+      } catch (error) {
+        addLog(`命令执行失败: ${error.message}`, 'error');
+        clearReturnValues();
+      }
+    }
+
+    // 更新返回值显示
+    function updateReturnValues(cmdName, result) {
+      if (!configData) return;
+
+      const command = configData.commands.find(cmd => cmd.name === cmdName);
+      if (!command || !command.returns) return;
+
+      command.returns.forEach((returnItem, index) => {
+        const returnElement = document.getElementById(`return_${index}`);
+        if (!returnElement) return;
+
+        let value = '未知';
+
+        try {
+          // 根据返回值配置解析结果
+          if (returnItem.position !== undefined) {
+            // 单个位置
+            if (result.data && Array.isArray(result.data) && result.data.length > returnItem.position) {
+              value = result.data[returnItem.position];
+            } else if (result[returnItem.name] !== undefined) {
+              value = result[returnItem.name];
+            }
+          } else if (returnItem.positions && Array.isArray(returnItem.positions)) {
+            // 多个位置（如float类型）
+            if (result.data && Array.isArray(result.data)) {
+              const values = returnItem.positions.map(pos => result.data[pos] || 0);
+              if (returnItem.type === 'float') {
+                // 将多个字节组合成float值
+                value = parseFloat(values.join('')) || values.join(',');
+              } else {
+                value = values.join(',');
+              }
+            }
+          } else if (result[returnItem.name] !== undefined) {
+            // 直接通过名称获取
+            value = result[returnItem.name];
+          }
+
+          // 格式化显示值
+          if (returnItem.type === 'float' && !isNaN(value)) {
+            value = parseFloat(value).toFixed(2);
+          } else if (returnItem.type === 'int' && !isNaN(value)) {
+            value = parseInt(value);
+          }
+
+          returnElement.textContent = value;
+          returnElement.className = 'px-3 py-1 bg-green-100 text-green-800 rounded text-sm font-mono';
+
+        } catch (error) {
+          returnElement.textContent = '解析错误';
+          returnElement.className = 'px-3 py-1 bg-red-100 text-red-800 rounded text-sm font-mono';
+        }
+      });
+    }
+
+    // 清空返回值显示
+    function clearReturnValues() {
+      const returnElements = document.querySelectorAll('[id^="return_"]');
+      returnElements.forEach(element => {
+        element.textContent = '执行失败';
+        element.className = 'px-3 py-1 bg-red-100 text-red-800 rounded text-sm font-mono';
+      });
+    }
+
+    // 重置返回值显示
+    function resetReturnValues() {
+      const returnElements = document.querySelectorAll('[id^="return_"]');
+      returnElements.forEach(element => {
+        element.textContent = '执行中...';
+        element.className = 'px-3 py-1 bg-blue-100 text-blue-800 rounded text-sm font-mono';
+      });
+    }
+
+    // 断开连接
+    function disconnect() {
+      if (currentConnection) {
+        try {
+          currentConnection.close();
+          currentConnection = null;
+          updateStatus(false, '连接已断开');
+        } catch (error) {
+          addLog(`断开连接失败: ${error.message}`, 'error');
+        }
+      } else {
+        addLog('当前没有活动连接', 'info');
+      }
+    }
+
+    // 清空输出
+    function clearOutput() {
+      const outputArea = document.getElementById('output-area');
+      outputArea.innerHTML = '';
+      addLog('输出已清空', 'info');
+    }
+
+    // 键盘快捷键
+    document.addEventListener('keydown', function (event) {
+      // Ctrl+Enter 执行命令
+      if (event.ctrlKey && event.key === 'Enter') {
+        executeCommand();
+      }
+      // Ctrl+L 清空输出
+      if (event.ctrlKey && event.key === 'l') {
+        event.preventDefault();
+        clearOutput();
+      }
+    });
+
+    // 初始化时检查DLL路径和模块加载
+    document.addEventListener('DOMContentLoaded', function () {
+      try {
+        addLog('正在初始化应用...', 'info');
+
+        // 检查core模块是否加载
+        if (typeof COM === 'undefined' || typeof UDP === 'undefined') {
+          addLog('错误: core.js模块未正确加载', 'error');
+          return;
+        }
+
+        const dllPath = getDllPath();
+        if (dllPath) {
+          addLog(`找到DLL文件: ${dllPath}`, 'success');
+        } else {
+          addLog('警告: 未找到DLL文件，请检查路径配置', 'error');
+        }
+
+        // 加载配置文件
+        loadConfig();
+
+        addLog('界面加载完成，准备就绪', 'success');
+      } catch (error) {
+        addLog(`初始化失败: ${error.message}`, 'error');
+        console.error('初始化错误:', error);
+      }
+    });
+
+    // 全局错误处理
+    window.addEventListener('error', function (event) {
+      addLog(`JavaScript错误: ${event.error.message}`, 'error');
+      console.error('全局错误:', event.error);
+    });
+
+    window.addEventListener('unhandledrejection', function (event) {
+      addLog(`未处理的Promise拒绝: ${event.reason}`, 'error');
+      console.error('Promise拒绝:', event.reason);
+    });
+  </script>
+</body>
+
+</html>
