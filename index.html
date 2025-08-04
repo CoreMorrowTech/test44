@@ -1,9 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
-  <title>通信控制台</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeLinear - 通信控制台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'app-dark': '#101014',
+            'app-gray': '#1D1D21',
+            'app-light': '#27272B',
+            'app-highlight': '#5E6AD2',
+            'app-text': '#EBEBEC',
+            'app-text-dim': '#A1A1A9',
+          }
+        }
+      }
+    }
+  </script>
   <style>
     * {
       margin: 0;
@@ -13,8 +32,8 @@
 
     body {
       font-family: 'Microsoft YaHei', 'Segoe UI', Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #333;
+      background: #101014;
+      color: #EBEBEC;
       height: 100vh;
       overflow: hidden;
     }
@@ -91,17 +110,17 @@
     .config-section {
       margin-bottom: 25px;
       padding: 15px;
-      background: rgba(255, 255, 255, 0.8);
+      background: #27272B;
       border-radius: 8px;
-      border: 1px solid rgba(0, 0, 0, 0.1);
+      border: 1px solid #27272B;
     }
 
     .config-section h3 {
       margin-bottom: 15px;
-      color: #495057;
+      color: #EBEBEC;
       font-size: 16px;
       font-weight: 600;
-      border-bottom: 2px solid #007bff;
+      border-bottom: 2px solid #5E6AD2;
       padding-bottom: 5px;
     }
 
@@ -113,23 +132,25 @@
       display: block;
       margin-bottom: 5px;
       font-weight: 500;
-      color: #495057;
+      color: #EBEBEC;
       font-size: 14px;
     }
 
     .form-control {
       width: 100%;
       padding: 8px 12px;
-      border: 1px solid #ced4da;
+      border: 1px solid #27272B;
       border-radius: 4px;
       font-size: 14px;
+      background: #1D1D21;
+      color: #EBEBEC;
       transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
     }
 
     .form-control:focus {
       outline: none;
-      border-color: #007bff;
-      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+      border-color: #5E6AD2;
+      box-shadow: 0 0 0 0.2rem rgba(94, 106, 210, 0.25);
     }
 
     .btn {
@@ -238,11 +259,12 @@
 
     .tab-button {
       padding: 10px 20px;
-      background: rgba(255, 255, 255, 0.7);
-      border: 1px solid rgba(0, 0, 0, 0.1);
+      background: #27272B;
+      border: 1px solid #27272B;
       cursor: pointer;
       transition: all 0.15s ease-in-out;
       font-weight: 500;
+      color: #A1A1A9;
     }
 
     .tab-button:first-child {
@@ -254,9 +276,9 @@
     }
 
     .tab-button.active {
-      background: #007bff;
-      color: white;
-      border-color: #007bff;
+      background: #5E6AD2;
+      color: #EBEBEC;
+      border-color: #5E6AD2;
     }
 
     .tab-content {
@@ -307,30 +329,30 @@
     .param-item {
       margin-bottom: 12px;
       padding: 10px;
-      background: rgba(255, 255, 255, 0.9);
+      background: #1D1D21;
       border-radius: 4px;
-      border-left: 3px solid #007bff;
+      border-left: 3px solid #5E6AD2;
     }
 
     .param-description {
       font-size: 11px;
-      color: #666;
+      color: #A1A1A9;
       margin-top: 3px;
       font-style: italic;
     }
 
     .param-info {
       font-size: 10px;
-      color: #888;
+      color: #A1A1A9;
       margin-top: 2px;
     }
 
     .no-params {
       text-align: center;
-      color: #666;
+      color: #A1A1A9;
       font-style: italic;
       padding: 15px;
-      background: rgba(255, 255, 255, 0.5);
+      background: #27272B;
       border-radius: 4px;
     }
 
@@ -378,9 +400,41 @@
 </head>
 
 <body>
-  <div class="container">
-    <!-- 侧边栏配置区域 -->
-    <div class="sidebar scrollbar">
+  <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <div class="w-14 bg-app-dark border-r border-app-light flex flex-col items-center py-4">
+      <div class="w-8 h-8 bg-app-highlight rounded-md mb-8 flex items-center justify-center">
+        <i class="fas fa-code text-white text-sm"></i>
+      </div>
+      <div class="flex flex-col space-y-6">
+        <button class="w-8 h-8 flex items-center justify-center rounded-md bg-app-light text-app-text">
+          <i class="fas fa-file-code"></i>
+        </button>
+        <button class="w-8 h-8 flex items-center justify-center rounded-md text-app-text-dim hover:bg-app-light">
+          <i class="fas fa-search"></i>
+        </button>
+        <button class="w-8 h-8 flex items-center justify-center rounded-md text-app-text-dim hover:bg-app-light">
+          <i class="fas fa-cog"></i>
+        </button>
+      </div>
+      <div class="mt-auto">
+        <button class="w-8 h-8 flex items-center justify-center rounded-md text-app-text-dim hover:bg-app-light">
+          <i class="fas fa-user-circle"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- File Navigation / Configuration Panel -->
+    <div class="w-80 bg-app-gray flex flex-col">
+      <div class="p-4 border-b border-app-light">
+        <div class="flex items-center justify-between">
+          <h2 class="font-medium text-app-text">通信控制台配置</h2>
+          <button class="text-app-text-dim hover:text-app-text">
+            <i class="fas fa-plus text-xs"></i>
+          </button>
+        </div>
+      </div>
+      <div class="overflow-y-auto flex-1 p-4 space-y-6">
       <!-- 通信类型选择 -->
       <div class="tab-buttons">
         <div class="tab-button active" onclick="switchTab('com')">COM串口</div>
@@ -505,28 +559,35 @@
         <h3>🔗 连接控制</h3>
         <button class="btn btn-danger btn-block" onclick="disconnect()">断开连接</button>
       </div>
+      </div>
     </div>
 
-    <!-- 主内容区域 -->
-    <div class="main-content">
-      <!-- 头部状态栏 -->
-      <div class="header">
-        <h1>通信控制台</h1>
-        <div class="status">
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col bg-app-dark">
+      <!-- Tabs -->
+      <div class="bg-app-gray border-b border-app-light flex">
+        <div class="px-4 py-2 bg-app-dark border-r border-app-light flex items-center">
+          <span class="text-app-text">通信控制台</span>
+          <button class="ml-2 text-app-text-dim hover:text-app-text">
+            <i class="fas fa-times text-xs"></i>
+          </button>
+        </div>
+        <div class="px-4 py-2 border-r border-app-light flex items-center text-app-text-dim">
           <div class="status-indicator" id="status-indicator"></div>
-          <span id="status-text">未连接</span>
+          <span id="status-text" class="ml-2">未连接</span>
         </div>
       </div>
 
-      <!-- 命令执行区域 -->
-      <div class="command-area">
-        <div class="command-input">
-          <input type="text" class="form-control" id="command-name" placeholder="输入命令名称，如: getAddress"
-            value="getAddress">
-          <input type="text" class="form-control" id="command-params" placeholder="输入参数，用逗号分隔，如: 1,2,3" value="1">
-          <button class="btn btn-primary" onclick="executeCommand()">执行命令</button>
-          <button class="btn btn-success" onclick="clearOutput()">清空输出</button>
-        </div>
+      <!-- Editor/Command Area -->
+      <div class="flex-1 overflow-auto">
+        <div class="p-4">
+          <!-- Command Input -->
+          <div class="command-input mb-4 flex gap-2">
+            <input type="text" class="form-control bg-app-light border-app-light text-app-text placeholder-app-text-dim" id="command-name" placeholder="输入命令名称，如: getAddress" value="getAddress">
+            <input type="text" class="form-control bg-app-light border-app-light text-app-text placeholder-app-text-dim" id="command-params" placeholder="输入参数，用逗号分隔，如: 1,2,3" value="1">
+            <button class="btn btn-primary" onclick="executeCommand()">执行命令</button>
+            <button class="btn btn-success" onclick="clearOutput()">清空输出</button>
+          </div>
 
         <!-- 返回值显示区域 -->
         <div id="return-values-container" style="display: none; margin-bottom: 15px;">
