@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Hello Electron!</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 50px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+    }
+    p {
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <h1>Hello Electron!</h1>
+    <p>Welcome to your Electron app</p>
+    <p>Node.js version: <span id="node-version"></span></p>
+    <p>Electron version: <span id="electron-version"></span></p>
+  </div>
+  
+  <script>
+    document.getElementById('node-version').innerText = process.versions.node;
+    document.getElementById('electron-version').innerText = process.versions.electron;
+  </script>
+</body>
+</html>
