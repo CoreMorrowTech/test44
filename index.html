@@ -293,6 +293,37 @@
     .scrollbar::-webkit-scrollbar-thumb:hover {
       background: rgba(255, 255, 255, 0.5);
     }
+
+    /* 动态表单样式 */
+    .param-item {
+      margin-bottom: 12px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 4px;
+      border-left: 3px solid #007bff;
+    }
+
+    .param-description {
+      font-size: 11px;
+      color: #666;
+      margin-top: 3px;
+      font-style: italic;
+    }
+
+    .param-info {
+      font-size: 10px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .no-params {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
@@ -398,14 +429,20 @@
         <button class="btn btn-success btn-block" onclick="selectProtocol()">设置协议</button>
       </div>
 
-      <!-- 快捷命令 -->
+      <!-- 动态命令配置 -->
       <div class="config-section">
-        <h3>🚀 快捷命令</h3>
-        <div class="quick-commands">
-          <button class="btn btn-primary" onclick="executeQuickCommand('getAddress', [1])">获取地址</button>
-          <button class="btn btn-primary" onclick="executeQuickCommand('SingleChannelVoltage', [1, 2, 10.0, 'O', 255])">单通道电压</button>
-          <button class="btn btn-success" onclick="executeQuickCommand('getStatus', [])">获取状态</button>
-          <button class="btn btn-success" onclick="executeQuickCommand('reset', [])">复位设备</button>
+        <h3>🚀 命令配置</h3>
+        <div class="form-group">
+          <label>选择命令</label>
+          <select class="form-control" id="command-select">
+            <option value="">请选择命令...</option>
+          </select>
+        </div>
+        <div id="command-info" style="display: none; margin-bottom: 15px; padding: 10px; background: rgba(0, 123, 255, 0.1); border-radius: 4px; font-size: 12px;">
+        </div>
+        <div id="param-container" style="display: none;">
+          <div id="param-fields"></div>
+          <button class="btn btn-primary btn-block" id="execute-dynamic-cmd" onclick="executeDynamicCommand()" disabled>执行命令</button>
         </div>
       </div>
 
@@ -468,6 +505,234 @@
     // 全局变量
     let currentConnection = null;
     let connectionType = 'com';
+    let configData = null;
+
+    // 加载配置数据
+    async function loadConfig() {
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const configPath = path.join(__dirname, 'config.json');
+        
+        if (fs.existsSync(configPath)) {
+          const configContent = fs.readFileSync(configPath, 'utf8');
+          configData = JSON.parse(configContent);
+          populateCommandSelect();
+          addLog('配置文件加载成功', 'success');
+        } else {
+          addLog('未找到config.json文件', 'error');
+        }
+      } catch (error) {
+        addLog(`配置加载失败: ${error.message}`, 'error');
+        console.error('配置加载错误:', error);
+      }
+    }
+
+    // 填充命令选择框
+    function populateCommandSelect() {
+      const select = document.getElementById('command-select');
+      select.innerHTML = '<option value="">请选择命令...</option>';
+      
+      if (configData && configData.commands) {
+        configData.commands.forEach(command => {
+          const option = document.createElement('option');
+          option.value = command.name;
+          option.textContent = command.name;
+          select.appendChild(option);
+        });
+      }
+    }
+
+    // 命令选择变化处理
+    document.getElementById('command-select').addEventListener('change', function() {
+      const selectedCommand = this.value;
+      if (selectedCommand && configData) {
+        const command = configData.commands.find(cmd => cmd.name === selectedCommand);
+        if (command) {
+          showCommandInfo(command);
+          generateParamFields(command);
+        }
+      } else {
+        hideCommandSections();
+      }
+    });
+
+    // 显示命令信息
+    function showCommandInfo(command) {
+      const infoDiv = document.getElementById('command-info');
+      infoDiv.innerHTML = `
+        <strong>命令:</strong> ${command.name}<br>
+        <strong>CMD1:</strong> ${command.cmd1} | <strong>CMD2:</strong> ${command.cmd2}<br>
+        <strong>参数数量:</strong> ${command.params.length}
+      `;
+      infoDiv.style.display = 'block';
+    }
+
+    // 生成参数输入字段
+    function generateParamFields(command) {
+      const container = document.getElementById('param-fields');
+      container.innerHTML = '';
+      
+      if (command.params.length === 0) {
+        container.innerHTML = '<div class="no-params">此命令无需参数</div>';
+        document.getElementById('param-container').style.display = 'block';
+        document.getElementById('execute-dynamic-cmd').disabled = false;
+        return;
+      }
+      
+      command.params.forEach((param, index) => {
+        const paramDiv = document.createElement('div');
+        paramDiv.className = 'param-item';
+        
+        const fieldHtml = generateFieldHtml(param, index);
+        paramDiv.innerHTML = fieldHtml;
+        
+        container.appendChild(paramDiv);
+      });
+      
+      document.getElementById('param-container').style.display = 'block';
+      updateDynamicExecuteButton();
+    }
+
+    // 生成字段HTML
+    function generateFieldHtml(param, index) {
+      let inputHtml = '';
+      let infoHtml = '';
+      
+      // 构建参数信息
+      if (param.type) infoHtml += `类型: ${param.type} `;
+      if (param.position !== undefined) infoHtml += `位置: ${param.position} `;
+      if (param.positions) infoHtml += `位置: [${param.positions.join(',')}] `;
+      if (param.min !== undefined) infoHtml += `最小值: ${param.min} `;
+      if (param.max !== undefined) infoHtml += `最大值: ${param.max} `;
+      
+      // 根据参数类型和约束生成输入框
+      if (param.allowvalue && param.allowvalue.length > 0) {
+        // 下拉选择
+        inputHtml = `
+          <select class="form-control" id="param_${index}" data-param-name="${param.name}" required>
+            <option value="">请选择...</option>
+            ${param.allowvalue.map(val => `<option value="${val}">${val}</option>`).join('')}
+          </select>
+        `;
+      } else if (param.values && param.values.length > 0) {
+        // 下拉选择（使用values）
+        inputHtml = `
+          <select class="form-control" id="param_${index}" data-param-name="${param.name}" required>
+            <option value="">请选择...</option>
+            ${param.values.map(val => `<option value="${val}">${val}</option>`).join('')}
+          </select>
+        `;
+      } else if (param.type === 'array') {
+        // 数组输入
+        inputHtml = `
+          <input type="text" class="form-control" id="param_${index}" data-param-name="${param.name}" 
+                 placeholder="请输入数组值，用逗号分隔，如: 1,2,3,4,5" required>
+        `;
+      } else {
+        // 普通输入框
+        let inputType = 'text';
+        let step = '';
+        let min = '';
+        let max = '';
+        
+        if (param.type === 'int') {
+          inputType = 'number';
+          step = '1';
+        } else if (param.type === 'float') {
+          inputType = 'number';
+          step = '0.01';
+        }
+        
+        if (param.min !== undefined) min = `min="${param.min}"`;
+        if (param.max !== undefined) max = `max="${param.max}"`;
+        
+        inputHtml = `
+          <input type="${inputType}" class="form-control" id="param_${index}" 
+                 data-param-name="${param.name}" 
+                 ${step ? `step="${step}"` : ''}
+                 ${min} ${max}
+                 placeholder="请输入${param.description || param.name}"
+                 required>
+        `;
+      }
+      
+      return `
+        <label for="param_${index}">${param.name}:</label>
+        ${inputHtml}
+        <div class="param-description">${param.description || '无描述'}</div>
+        <div class="param-info">${infoHtml}</div>
+      `;
+    }
+
+    // 更新动态执行按钮状态
+    function updateDynamicExecuteButton() {
+      const inputs = document.querySelectorAll('#param-fields input, #param-fields select');
+      let allValid = true;
+      
+      inputs.forEach(input => {
+        if (input.hasAttribute('required') && !input.value.trim()) {
+          allValid = false;
+        }
+      });
+      
+      document.getElementById('execute-dynamic-cmd').disabled = !allValid;
+    }
+
+    // 监听动态表单输入变化
+    document.addEventListener('input', function(e) {
+      if (e.target.closest('#param-fields')) {
+        updateDynamicExecuteButton();
+      }
+    });
+
+    // 执行动态命令
+    function executeDynamicCommand() {
+      const selectedCommand = document.getElementById('command-select').value;
+      if (!selectedCommand || !configData) {
+        addLog('请先选择命令', 'error');
+        return;
+      }
+
+      const command = configData.commands.find(cmd => cmd.name === selectedCommand);
+      if (!command) {
+        addLog('未找到命令配置', 'error');
+        return;
+      }
+
+      const params = [];
+      const inputs = document.querySelectorAll('#param-fields input, #param-fields select');
+      
+      inputs.forEach(input => {
+        const paramName = input.dataset.paramName;
+        let value = input.value.trim();
+        
+        // 处理数组类型
+        if (input.type === 'text' && value && command.params.find(p => p.name === paramName)?.type === 'array') {
+          value = value.split(',').map(v => {
+            const trimmed = v.trim();
+            return !isNaN(trimmed) && trimmed !== '' ? parseFloat(trimmed) : trimmed;
+          });
+        } else if (value && !isNaN(value) && value !== '') {
+          // 尝试转换为数字
+          const param = command.params.find(p => p.name === paramName);
+          if (param && (param.type === 'int' || param.type === 'float')) {
+            value = param.type === 'int' ? parseInt(value) : parseFloat(value);
+          }
+        }
+        
+        params.push(value);
+      });
+
+      addLog(`执行动态命令: ${selectedCommand}(${params.join(', ')})`, 'info');
+      executeQuickCommand(selectedCommand, params);
+    }
+
+    // 隐藏命令相关部分
+    function hideCommandSections() {
+      document.getElementById('command-info').style.display = 'none';
+      document.getElementById('param-container').style.display = 'none';
+    }
 
     // 初始化时检查DLL路径和模块加载
     document.addEventListener('DOMContentLoaded', function() {
@@ -486,6 +751,9 @@
         } else {
           addLog('警告: 未找到DLL文件，请检查路径配置', 'error');
         }
+        
+        // 加载配置文件
+        loadConfig();
         
         addLog('界面加载完成，准备就绪', 'success');
       } catch (error) {
