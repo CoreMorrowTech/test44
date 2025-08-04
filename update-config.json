@@ -1,0 +1,19 @@
+{
+  "updateServer": {
+    "type": "github",
+    "owner": "CoreMorrowTech",
+    "repo": "test44",
+    "apiUrl": "https://api.github.com/repos/CoreMorrowTech/test44/releases/latest"
+    
+  },
+  "updateSettings": {
+    "checkOnStartup": false,
+    "autoDownload": false,
+    "allowPrerelease": false
+  },
+  "filePatterns": {
+    "windows": ["*.exe", "*setup*.exe", "*installer*.exe"],
+    "mac": ["*.dmg", "*.pkg"],
+    "linux": ["*.AppImage", "*.deb", "*.rpm"]
+  }
+}

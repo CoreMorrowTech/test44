@@ -494,6 +494,11 @@
         </button>
       </div>
       <div class="mt-auto flex flex-col space-y-4">
+        <button id="update-check"
+          class="w-8 h-8 flex items-center justify-center rounded-md text-app-text-dim hover:bg-app-light transition-colors"
+          onclick="checkForUpdates()" title="检查更新">
+          <i class="fas fa-download"></i>
+        </button>
         <button id="language-toggle"
           class="w-8 h-8 flex items-center justify-center rounded-md text-app-text-dim hover:bg-app-light transition-colors"
           onclick="toggleLanguage()" title="切换语言">
@@ -793,7 +798,18 @@
           switchedToLight: '已切换到浅色主题',
           switchedToDark: '已切换到深色主题',
           switchedToEnglish: '已切换到英文',
-          switchedToChinese: '已切换到中文'
+          switchedToChinese: '已切换到中文',
+
+          // 更新检查
+          checkUpdate: '检查更新',
+          checkingUpdate: '正在检查更新...',
+          updateAvailable: '发现新版本',
+          noUpdateAvailable: '已是最新版本',
+          updateError: '检查更新失败',
+          currentVersion: '当前版本',
+          latestVersion: '最新版本',
+          downloadUpdate: '下载更新',
+          updateDescription: '更新说明'
         },
         en: {
           // Title bar
@@ -872,7 +888,18 @@
           switchedToLight: 'Switched to light theme',
           switchedToDark: 'Switched to dark theme',
           switchedToEnglish: 'Switched to English',
-          switchedToChinese: 'Switched to Chinese'
+          switchedToChinese: 'Switched to Chinese',
+
+          // Update check
+          checkUpdate: 'Check Update',
+          checkingUpdate: 'Checking for updates...',
+          updateAvailable: 'New version available',
+          noUpdateAvailable: 'Already up to date',
+          updateError: 'Failed to check for updates',
+          currentVersion: 'Current Version',
+          latestVersion: 'Latest Version',
+          downloadUpdate: 'Download Update',
+          updateDescription: 'Update Description'
         }
       };
 
@@ -1769,10 +1796,6 @@
         }
       });
 
-      // 页面加载完成后的初始化
-      document.addEventListener('DOMContentLoaded', function () {
-        addLog('界面加载完成，准备就绪', 'success');
-      });
       function selectProtocol() {
         const version = parseInt(document.getElementById('protocol-version').value);
 
@@ -1953,6 +1976,257 @@
         addLog('输出已清空', 'info');
       }
 
+      // 检查更新功能
+      async function checkForUpdates() {
+        const t = translations[currentLanguage];
+        const updateBtn = document.getElementById('update-check');
+        const originalIcon = updateBtn.innerHTML;
+        
+        // 显示检查中状态
+        updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        updateBtn.disabled = true;
+        addLog(t.checkingUpdate, 'info');
+
+        try {
+          // 从package.json获取当前版本
+          const currentVersion = require('./package.json').version;
+          
+          // 从配置文件读取更新服务器信息
+          const updateConfig = require('./update-config.json');
+          const updateCheckUrl = updateConfig.updateServer.apiUrl;
+          
+          // 使用fetch进行网络请求
+          const response = await fetch(updateCheckUrl, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/vnd.github.v3+json',
+              'User-Agent': 'CodeLinear-App'
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const releaseData = await response.json();
+          const latestVersion = releaseData.tag_name.replace(/^v/, ''); // 移除v前缀
+          
+          // 查找exe文件
+          const exeAsset = releaseData.assets.find(asset => 
+            asset.name.toLowerCase().endsWith('.exe') || 
+            asset.name.toLowerCase().includes('setup') ||
+            asset.name.toLowerCase().includes('installer')
+          );
+          
+          // 比较版本号
+          if (compareVersions(latestVersion, currentVersion) > 0) {
+            // 有新版本
+            addLog(`${t.updateAvailable}: v${latestVersion}`, 'success');
+            showUpdateDialog(currentVersion, latestVersion, releaseData, exeAsset);
+          } else {
+            // 已是最新版本
+            addLog(`${t.noUpdateAvailable} (v${currentVersion})`, 'info');
+            showNoUpdateDialog(currentVersion);
+          }
+
+        } catch (error) {
+          console.error('检查更新失败:', error);
+          addLog(`${t.updateError}: ${error.message}`, 'error');
+          
+          // 如果网络请求失败，可以尝试备用方案
+          if (error.message.includes('fetch')) {
+            addLog('网络连接失败，请检查网络连接后重试', 'error');
+          }
+        } finally {
+          // 恢复按钮状态
+          updateBtn.innerHTML = originalIcon;
+          updateBtn.disabled = false;
+        }
+      }
+
+      // 版本号比较函数
+      function compareVersions(version1, version2) {
+        const v1parts = version1.split('.').map(Number);
+        const v2parts = version2.split('.').map(Number);
+        
+        for (let i = 0; i < Math.max(v1parts.length, v2parts.length); i++) {
+          const v1part = v1parts[i] || 0;
+          const v2part = v2parts[i] || 0;
+          
+          if (v1part > v2part) return 1;
+          if (v1part < v2part) return -1;
+        }
+        return 0;
+      }
+
+      // 显示更新对话框
+      function showUpdateDialog(currentVersion, latestVersion, releaseData, exeAsset) {
+        const t = translations[currentLanguage];
+        
+        // 创建模态对话框
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        `;
+
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+          background: var(--bg-secondary);
+          border-radius: 8px;
+          padding: 24px;
+          max-width: 500px;
+          width: 90%;
+          color: var(--text-primary);
+          border: 1px solid var(--border-color);
+        `;
+
+        // 构建下载信息
+        let downloadInfo = '';
+        if (exeAsset) {
+          const fileSize = (exeAsset.size / (1024 * 1024)).toFixed(1);
+          downloadInfo = `
+            <div style="margin-bottom: 16px; padding: 12px; background: var(--bg-tertiary); border-radius: 4px;">
+              <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                <i class="fas fa-file-archive" style="color: var(--accent-primary); margin-right: 8px;"></i>
+                <strong>安装包信息</strong>
+              </div>
+              <p style="margin: 4px 0; font-size: 13px;">文件名: ${exeAsset.name}</p>
+              <p style="margin: 4px 0; font-size: 13px;">大小: ${fileSize} MB</p>
+              <p style="margin: 4px 0; font-size: 13px;">下载次数: ${exeAsset.download_count}</p>
+            </div>
+          `;
+        }
+
+        dialog.innerHTML = `
+          <div style="display: flex; align-items: center; margin-bottom: 16px;">
+            <i class="fas fa-download" style="color: var(--accent-primary); margin-right: 8px;"></i>
+            <h3 style="margin: 0; font-size: 18px;">${t.updateAvailable}</h3>
+          </div>
+          <div style="margin-bottom: 16px;">
+            <p style="margin: 8px 0;"><strong>${t.currentVersion}:</strong> v${currentVersion}</p>
+            <p style="margin: 8px 0;"><strong>${t.latestVersion}:</strong> v${latestVersion}</p>
+          </div>
+          ${downloadInfo}
+          <div style="margin-bottom: 20px;">
+            <h4 style="margin: 0 0 8px 0;">${t.updateDescription}:</h4>
+            <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 4px; max-height: 150px; overflow-y: auto;">
+              ${releaseData.body ? releaseData.body.replace(/\n/g, '<br>') : '暂无更新说明'}
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button id="cancel-update" class="btn" style="background: var(--bg-tertiary); color: var(--text-primary);">取消</button>
+            ${exeAsset ? 
+              `<button id="download-exe" class="btn btn-success" style="margin-right: 8px;">
+                <i class="fas fa-download" style="margin-right: 4px;"></i>直接下载
+              </button>` : ''
+            }
+            <button id="view-release" class="btn btn-primary">查看发布页</button>
+          </div>
+        `;
+
+        modal.appendChild(dialog);
+        document.body.appendChild(modal);
+
+        // 绑定事件
+        document.getElementById('cancel-update').onclick = () => {
+          document.body.removeChild(modal);
+        };
+
+        // 直接下载exe文件
+        if (exeAsset) {
+          document.getElementById('download-exe').onclick = () => {
+            require('electron').shell.openExternal(exeAsset.browser_download_url);
+            addLog(`开始下载: ${exeAsset.name}`, 'info');
+            document.body.removeChild(modal);
+          };
+        }
+
+        // 查看发布页面
+        document.getElementById('view-release').onclick = () => {
+          require('electron').shell.openExternal(releaseData.html_url);
+          document.body.removeChild(modal);
+        };
+
+        // 点击背景关闭
+        modal.onclick = (e) => {
+          if (e.target === modal) {
+            document.body.removeChild(modal);
+          }
+        };
+      }
+
+      // 显示无更新对话框
+      function showNoUpdateDialog(currentVersion) {
+        const t = translations[currentLanguage];
+        
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        `;
+
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+          background: var(--bg-secondary);
+          border-radius: 8px;
+          padding: 24px;
+          max-width: 400px;
+          width: 90%;
+          color: var(--text-primary);
+          border: 1px solid var(--border-color);
+          text-align: center;
+        `;
+
+        dialog.innerHTML = `
+          <div style="margin-bottom: 16px;">
+            <i class="fas fa-check-circle" style="color: #28a745; font-size: 48px;"></i>
+          </div>
+          <h3 style="margin: 0 0 12px 0;">${t.noUpdateAvailable}</h3>
+          <p style="margin: 0 0 20px 0; color: var(--text-secondary);">
+            ${t.currentVersion}: v${currentVersion}
+          </p>
+          <button id="close-dialog" class="btn btn-primary">确定</button>
+        `;
+
+        modal.appendChild(dialog);
+        document.body.appendChild(modal);
+
+        // 绑定关闭事件
+        document.getElementById('close-dialog').onclick = () => {
+          document.body.removeChild(modal);
+        };
+
+        modal.onclick = (e) => {
+          if (e.target === modal) {
+            document.body.removeChild(modal);
+          }
+        };
+
+        // 3秒后自动关闭
+        setTimeout(() => {
+          if (document.body.contains(modal)) {
+            document.body.removeChild(modal);
+          }
+        }, 3000);
+      }
+
       // 键盘快捷键
       document.addEventListener('keydown', function (event) {
         // Ctrl+Enter 执行命令
@@ -1969,6 +2243,12 @@
       // 页面加载完成后的初始化
       document.addEventListener('DOMContentLoaded', function () {
         addLog('界面加载完成，准备就绪', 'success');
+        
+        // 从本地存储恢复语言设置
+        const savedLanguage = localStorage.getItem('language');
+        if (savedLanguage && savedLanguage !== currentLanguage) {
+          toggleLanguage();
+        }
       });
     </script>
 </body>
