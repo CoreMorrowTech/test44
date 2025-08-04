@@ -7,7 +7,7 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
-    "build:win": "electron-builder --win",
+    "build:win": "electron-builder --win --publish=never",
     "dist": "electron-builder --publish=never",
     "release": "node scripts/build-and-release.js",
     "quick-release": "node scripts/quick-release.js",
