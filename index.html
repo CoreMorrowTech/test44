@@ -458,8 +458,8 @@
   </div>
 
   <script>
-    // 引入核心模块
-    const { COM, UDP, getDllPath, getConfigPath } = require('./core');
+    // 引入核心模块 - 使用koffi版本
+    const { COM, UDP, getDllPath, getConfigPath } = require('./core-koffi');
 
     // 设置版本信息
     document.getElementById('node-version').innerText = process.versions.node;
@@ -469,15 +469,40 @@
     let currentConnection = null;
     let connectionType = 'com';
 
-    // 初始化时检查DLL路径
+    // 初始化时检查DLL路径和模块加载
     document.addEventListener('DOMContentLoaded', function() {
-      const dllPath = getDllPath();
-      if (dllPath) {
-        addLog(`找到DLL文件: ${dllPath}`, 'success');
-      } else {
-        addLog('警告: 未找到DLL文件，请检查路径配置', 'error');
+      try {
+        addLog('正在初始化应用...', 'info');
+        
+        // 检查core模块是否加载
+        if (typeof COM === 'undefined' || typeof UDP === 'undefined') {
+          addLog('错误: core.js模块未正确加载', 'error');
+          return;
+        }
+        
+        const dllPath = getDllPath();
+        if (dllPath) {
+          addLog(`找到DLL文件: ${dllPath}`, 'success');
+        } else {
+          addLog('警告: 未找到DLL文件，请检查路径配置', 'error');
+        }
+        
+        addLog('界面加载完成，准备就绪', 'success');
+      } catch (error) {
+        addLog(`初始化失败: ${error.message}`, 'error');
+        console.error('初始化错误:', error);
       }
-      addLog('界面加载完成，准备就绪', 'success');
+    });
+
+    // 全局错误处理
+    window.addEventListener('error', function(event) {
+      addLog(`JavaScript错误: ${event.error.message}`, 'error');
+      console.error('全局错误:', event.error);
+    });
+
+    window.addEventListener('unhandledrejection', function(event) {
+      addLog(`未处理的Promise拒绝: ${event.reason}`, 'error');
+      console.error('Promise拒绝:', event.reason);
     });
 
     // 切换标签页
@@ -523,8 +548,11 @@
     // 连接COM
     async function connectCOM() {
       try {
+        addLog('开始连接COM...', 'info');
+        
         // 先断开现有连接
         if (currentConnection) {
+          addLog('断开现有连接...', 'info');
           currentConnection.close();
           currentConnection = null;
         }
@@ -537,23 +565,34 @@
 
         addLog(`正在连接COM端口: ${port}, 波特率: ${baudrate}...`, 'info');
 
+        // 检查模块是否正确加载
+        if (typeof COM === 'undefined') {
+          throw new Error('COM模块未正确加载，请检查core.js文件');
+        }
+
         // 创建COM连接
+        addLog('创建COM连接对象...', 'info');
         currentConnection = new COM(port, baudrate, databits, stopbits, parity);
         connectionType = 'com';
         
         updateStatus(true, `COM连接成功: ${port} @ ${baudrate}bps, ${databits}bits, ${stopbits}stop, ${parity}parity`);
 
       } catch (error) {
+        console.error('COM连接错误:', error);
         currentConnection = null;
         updateStatus(false, `COM连接失败: ${error.message}`);
+        addLog(`详细错误信息: ${error.stack}`, 'error');
       }
     }
 
     // 连接UDP
     async function connectUDP() {
       try {
+        addLog('开始连接UDP...', 'info');
+        
         // 先断开现有连接
         if (currentConnection) {
+          addLog('断开现有连接...', 'info');
           currentConnection.close();
           currentConnection = null;
         }
@@ -565,15 +604,23 @@
 
         addLog(`正在连接UDP: ${remoteIp}:${remotePort} -> ${localIp}:${localPort}...`, 'info');
 
+        // 检查模块是否正确加载
+        if (typeof UDP === 'undefined') {
+          throw new Error('UDP模块未正确加载，请检查core.js文件');
+        }
+
         // 创建UDP连接
+        addLog('创建UDP连接对象...', 'info');
         currentConnection = new UDP(remoteIp, remotePort, localIp, localPort);
         connectionType = 'udp';
         
         updateStatus(true, `UDP连接成功: ${remoteIp}:${remotePort} -> ${localIp}:${localPort}`);
 
       } catch (error) {
+        console.error('UDP连接错误:', error);
         currentConnection = null;
         updateStatus(false, `UDP连接失败: ${error.message}`);
+        addLog(`详细错误信息: ${error.stack}`, 'error');
       }
     }
 

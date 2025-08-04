@@ -3,15 +3,20 @@ const path = require('path');
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1200,
+    height: 800,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      enableRemoteModule: true,
+      webSecurity: false  // 允许加载本地文件和原生模块
     }
   });
 
   mainWindow.loadFile('index.html');
+  
+  // 打开开发者工具以便调试
+  mainWindow.webContents.openDevTools();
 }
 
 app.whenReady().then(createWindow);

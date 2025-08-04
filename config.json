@@ -1,0 +1,383 @@
+{
+  "commands": [
+    {
+      "name": "SingleChannelVoltage",
+      "cmd1": 0,
+      "cmd2": 1,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1, "allowvalue": [1,2,3,4,5], "max": 10, "min": 0, "description": "地址", "values": [1,2,3,4,5]},
+        {"name": "CHANNEL", "type": "int", "position": 5, "allowvalue": [1,2,3,4,5], "max": 10, "min": 0, "description": "通道", "values": [1,2,3,4,5]},
+        {"name": "VOLTAGE", "type": "float", "positions": [6,7,8,9], "allowvalue": [], "max": 100.0, "min": 0.0, "description": "电压", "values": [0.0, 100.0]},
+        {"name": "O", "type": "str", "position": 10, "allowvalue": ["O","C"], "max": 100, "min": 0, "description": "开O闭C环", "values": ["O","C"]},
+        {"name": "255", "type": "int", "position": 11, "allowvalue": [], "max": 1000, "min": 0, "description": "ff", "values": [0,1000]}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "ReadSingleChannelVoltage",
+      "cmd1": 5,
+      "cmd2": 1,      
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1, "values": [1,2,3,4,5]},
+        
+        {"name": "CHANNEL", "type": "int", "position": 5, "values": [1,2,3,4,5]}
+      ],
+      "returns": [
+        {"name": "CHANNEL", "type": "int", "position": 0},
+        {"name": "VOLTAGE", "type": "float", "positions": [1,2,3,4]}
+      ]
+    }
+    ,{
+      "name": "getAddress",
+      "cmd1": 47,
+      "cmd2": 0,      
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1, "values": [1,2,3,4,5]}
+      ],
+      "returns": [
+        {"name": "ADDRESS", "type": "int", "position": 0}
+       
+      ]
+    },
+    {
+      "name": "setStepArrayData",
+      "cmd1": 70,
+      "cmd2": 0,      
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1, "values": [1,2,3,4,5]},
+        {"name": "CHANNEL", "type": "int", "position": 5, "values": [1,2,3,4,5]},
+        {"name": "ARRAY", "type": "array", "position": 1, "values": [1,2,3,4,5]}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+
+
+
+    {
+      "name": "setxChannelVoltage",
+      "cmd1": 0,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5},
+        {"name": "VOLTAGE", "type": "float", "positions": [6,7,8,9]}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "setxChannelRange",
+      "cmd1": 1,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5},
+        {"name": "RANGE", "type": "float", "positions": [6,7,8,9]}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "setThreeChannelVoltage",
+      "cmd1": 2,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "VOLTAGE1", "type": "float", "positions": [5,6,7,8]},
+        {"name": "VOLTAGE2", "type": "float", "positions": [9,10,11,12]},
+        {"name": "VOLTAGE3", "type": "float", "positions": [13,14,15,16]}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "setThreeChannelRange",
+      "cmd1": 3,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "RANGE1", "type": "float", "positions": [5,6,7,8]},
+        {"name": "RANGE2", "type": "float", "positions": [9,10,11,12]},
+        {"name": "RANGE3", "type": "float", "positions": [13,14,15,16]}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "Voltage_RangeReset",
+      "cmd1": 4,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "getxChannelVoltage",
+      "cmd1": 5,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5}
+      ],
+      "returns": [
+        {"name": "CHANNEL", "type": "int", "position": 0},
+        {"name": "VOLTAGE", "type": "float", "positions": [1,2,3,4]}
+      ]
+    },
+    {
+      "name": "getxChannelRange",
+      "cmd1": 6,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5}
+      ],
+      "returns": [
+        {"name": "CHANNEL", "type": "int", "position": 0},
+        {"name": "RANGE", "type": "float", "positions": [1,2,3,4]}
+      ]
+    },
+    {
+      "name": "getxChannelVoltageTms",
+      "cmd1": 7,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5},
+        {"name": "TIME_MS", "type": "int", "position": 6}
+      ],
+      "returns": [
+        {"name": "CHANNEL", "type": "int", "position": 0},
+        {"name": "VOLTAGE", "type": "float", "positions": [1,2,3,4]}
+      ]
+    },
+    {
+      "name": "getxChannelRangeTms",
+      "cmd1": 8,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5},
+        {"name": "TIME_MS", "type": "int", "position": 6}
+      ],
+      "returns": [
+        {"name": "CHANNEL", "type": "int", "position": 0},
+        {"name": "RANGE", "type": "float", "positions": [1,2,3,4]}
+      ]
+    },
+    {
+      "name": "getThreeChannelVoltageTms",
+      "cmd1": 9,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "TIME_MS", "type": "int", "position": 5}
+      ],
+      "returns": [
+        {"name": "VOLTAGE1", "type": "float", "positions": [0,1,2,3]},
+        {"name": "VOLTAGE2", "type": "float", "positions": [4,5,6,7]},
+        {"name": "VOLTAGE3", "type": "float", "positions": [8,9,10,11]}
+      ]
+    },
+    {
+      "name": "getThreeChannelRangeTms",
+      "cmd1": 10,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "TIME_MS", "type": "int", "position": 5}
+      ],
+      "returns": [
+        {"name": "RANGE1", "type": "float", "positions": [0,1,2,3]},
+        {"name": "RANGE2", "type": "float", "positions": [4,5,6,7]},
+        {"name": "RANGE3", "type": "float", "positions": [8,9,10,11]}
+      ]
+    },
+    {
+      "name": "stopAllVoltage_RangeTms",
+      "cmd1": 11,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "VoltageWaveform_HS",
+      "cmd1": 12,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5},
+        {"name": "WAVEFORM", "type": "str", "position": 6, "allowvalue": ["Z","J","S","F"]},
+        {"name": "P-P", "type": "float", "positions": [7,8,9,10]},
+        {"name": "FRE", "type": "float", "positions": [11,12,13,14]},
+        {"name": "OFFSET", "type": "float", "positions": [15,16,17,18]}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "RangeWaveform_HS",
+      "cmd1": 13,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5},
+        {"name": "WAVEFORM", "type": "str", "position": 6, "allowvalue": ["Z","J","S","F"]},
+        {"name": "P-P", "type": "float", "positions": [7,8,9,10]},
+        {"name": "FRE", "type": "float", "positions": [11,12,13,14]},
+        {"name": "OFFSET", "type": "float", "positions": [15,16,17,18]}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "StopWaveform_HS",
+      "cmd1": 14,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "VoltageWaveform_LS",
+      "cmd1": 15,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5},
+        {"name": "WAVEFORM", "type": "str", "position": 6, "allowvalue": ["Z","J","S","F"]},
+        {"name": "P-P", "type": "float", "positions": [7,8,9,10]},
+        {"name": "FRE", "type": "float", "positions": [11,12,13,14]},
+        {"name": "OFFSET", "type": "float", "positions": [15,16,17,18]}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "RangeWaveform_LS",
+      "cmd1": 16,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5},
+        {"name": "WAVEFORM", "type": "str", "position": 6, "allowvalue": ["Z","J","S","F"]},
+        {"name": "P-P", "type": "float", "positions": [7,8,9,10]},
+        {"name": "FRE", "type": "float", "positions": [11,12,13,14]},
+        {"name": "OFFSET", "type": "float", "positions": [15,16,17,18]},
+        {"name": "sPARA", "type": "int", "position": 19, "allowvalue": [0,1]}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "StopWaveform_LS",
+      "cmd1": 17,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5},
+        {"name": "sPARA", "type": "int", "position": 6, "allowvalue": [0,1]}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "setxChannelServoStatus",
+      "cmd1": 18,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5},
+        {"name": "SERVOSTATUS", "type": "str", "position": 6, "allowvalue": ["C","O"]}
+      ],
+      "returns": [
+        {"name": "CHANNEL", "type": "int", "position": 0},
+        {"name": "SERVOSTATUS", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "getxChannelServoStatus",
+      "cmd1": 19,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5}
+      ],
+      "returns": [
+        {"name": "CHANNEL", "type": "int", "position": 0},
+        {"name": "SERVOSTATUS", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "setxChannelADMode",
+      "cmd1": 20,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5},
+        {"name": "ADMODE", "type": "str", "position": 6, "allowvalue": ["C","O"]}
+      ],
+      "returns": [
+        {"name": "CHANNEL", "type": "int", "position": 0},
+        {"name": "ADMODE", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "getxChannelADMode",
+      "cmd1": 21,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5}
+      ],
+      "returns": [
+        {"name": "CHANNEL", "type": "int", "position": 0},
+        {"name": "ADMODE", "type": "str", "position": 1}
+      ]
+    }
+
+
+  ],
+  "metadata": {
+    "version": "1.0",
+    "generateFunctionName": true,
+    "functionNamePattern": "set{CommandName}"
+  }
+}
