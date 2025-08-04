@@ -494,6 +494,11 @@
         </button>
       </div>
       <div class="mt-auto flex flex-col space-y-4">
+        <button id="language-toggle"
+          class="w-8 h-8 flex items-center justify-center rounded-md text-app-text-dim hover:bg-app-light transition-colors"
+          onclick="toggleLanguage()" title="切换语言">
+          <span class="text-xs font-bold">中</span>
+        </button>
         <button id="theme-toggle"
           class="w-8 h-8 flex items-center justify-center rounded-md text-app-text-dim hover:bg-app-light transition-colors"
           onclick="toggleTheme()" title="切换主题">
@@ -705,6 +710,328 @@
       // 引入核心模块 - 使用koffi版本
       const { COM, UDP, getDllPath, getConfigPath } = require('./core-koffi');
       const { ipcRenderer } = require('electron');
+
+      // 语言切换功能
+      let currentLanguage = 'zh';
+
+      // 语言字典
+      const translations = {
+        zh: {
+          // 标题栏
+          title: 'CodeLinear - 通信控制台',
+
+          // 侧边栏配置面板
+          configTitle: '通信控制台配置',
+
+          // 通信类型选择
+          comSerial: 'COM串口',
+          udpNetwork: 'UDP网络',
+
+          // COM配置
+          comConfig: '🔌 COM串口配置',
+          portNumber: '端口号',
+          baudRate: '波特率',
+          dataBits: '数据位',
+          stopBits: '停止位',
+          parity: '校验位',
+          noParity: '无校验',
+          oddParity: '奇校验',
+          evenParity: '偶校验',
+          connectCom: '连接COM',
+
+          // UDP配置
+          udpConfig: '🌐 UDP网络配置',
+          remoteIp: '远程IP地址',
+          remotePort: '远程端口',
+          localIp: '本地IP地址',
+          localPort: '本地端口',
+          connectUdp: '连接UDP',
+
+          // 协议配置
+          protocolConfig: '⚙️ 协议配置',
+          protocolVersion: '协议版本',
+          protocolVersion1: '协议版本 1',
+          protocolVersion2: '协议版本 2',
+          protocolVersion3: '协议版本 3',
+          setProtocol: '设置协议',
+
+          // 命令配置
+          commandConfig: '🚀 命令配置',
+          selectCommand: '选择命令',
+          selectCommandPlaceholder: '请选择命令...',
+          executeCommand: '执行命令',
+
+          // 连接控制
+          connectionControl: '🔗 连接控制',
+          disconnect: '断开连接',
+
+          // 主内容区
+          communicationConsole: '通信控制台',
+          notConnected: '未连接',
+          connected: '已连接',
+
+          // 命令输入
+          commandNamePlaceholder: '输入命令名称，如: getAddress',
+          commandParamsPlaceholder: '输入参数，用逗号分隔，如: 1,2,3',
+          executeCommandBtn: '执行命令',
+          clearOutput: '清空输出',
+
+          // 返回值
+          returnValues: '📤 返回值',
+          noReturnValues: '此命令无返回值',
+          waitingExecution: '等待执行...',
+
+          // 日志消息
+          systemStartup: '系统启动',
+          consoleStarted: '通信控制台已启动，请配置连接参数',
+          supportInfo: '支持COM串口和UDP网络通信',
+          usageInfo: '可以使用快捷命令或手动输入命令执行',
+
+          // 主题和语言切换
+          switchTheme: '切换主题',
+          switchLanguage: '切换语言',
+          switchedToLight: '已切换到浅色主题',
+          switchedToDark: '已切换到深色主题',
+          switchedToEnglish: '已切换到英文',
+          switchedToChinese: '已切换到中文'
+        },
+        en: {
+          // Title bar
+          title: 'CodeLinear - Communication Console',
+
+          // Sidebar config panel
+          configTitle: 'Communication Console Config',
+
+          // Communication type selection
+          comSerial: 'COM Serial',
+          udpNetwork: 'UDP Network',
+
+          // COM configuration
+          comConfig: '🔌 COM Serial Configuration',
+          portNumber: 'Port Number',
+          baudRate: 'Baud Rate',
+          dataBits: 'Data Bits',
+          stopBits: 'Stop Bits',
+          parity: 'Parity',
+          noParity: 'None',
+          oddParity: 'Odd',
+          evenParity: 'Even',
+          connectCom: 'Connect COM',
+
+          // UDP configuration
+          udpConfig: '🌐 UDP Network Configuration',
+          remoteIp: 'Remote IP Address',
+          remotePort: 'Remote Port',
+          localIp: 'Local IP Address',
+          localPort: 'Local Port',
+          connectUdp: 'Connect UDP',
+
+          // Protocol configuration
+          protocolConfig: '⚙️ Protocol Configuration',
+          protocolVersion: 'Protocol Version',
+          protocolVersion1: 'Protocol Version 1',
+          protocolVersion2: 'Protocol Version 2',
+          protocolVersion3: 'Protocol Version 3',
+          setProtocol: 'Set Protocol',
+
+          // Command configuration
+          commandConfig: '🚀 Command Configuration',
+          selectCommand: 'Select Command',
+          selectCommandPlaceholder: 'Please select command...',
+          executeCommand: 'Execute Command',
+
+          // Connection control
+          connectionControl: '🔗 Connection Control',
+          disconnect: 'Disconnect',
+
+          // Main content area
+          communicationConsole: 'Communication Console',
+          notConnected: 'Not Connected',
+          connected: 'Connected',
+
+          // Command input
+          commandNamePlaceholder: 'Enter command name, e.g.: getAddress',
+          commandParamsPlaceholder: 'Enter parameters separated by commas, e.g.: 1,2,3',
+          executeCommandBtn: 'Execute Command',
+          clearOutput: 'Clear Output',
+
+          // Return values
+          returnValues: '📤 Return Values',
+          noReturnValues: 'This command has no return values',
+          waitingExecution: 'Waiting for execution...',
+
+          // Log messages
+          systemStartup: 'System Startup',
+          consoleStarted: 'Communication console started, please configure connection parameters',
+          supportInfo: 'Supports COM serial and UDP network communication',
+          usageInfo: 'You can use quick commands or manually input commands to execute',
+
+          // Theme and language switching
+          switchTheme: 'Switch Theme',
+          switchLanguage: 'Switch Language',
+          switchedToLight: 'Switched to light theme',
+          switchedToDark: 'Switched to dark theme',
+          switchedToEnglish: 'Switched to English',
+          switchedToChinese: 'Switched to Chinese'
+        }
+      };
+
+      function toggleLanguage() {
+        const languageToggleBtn = document.querySelector('#language-toggle span');
+
+        if (currentLanguage === 'zh') {
+          // 切换到英文
+          currentLanguage = 'en';
+          languageToggleBtn.textContent = 'EN';
+          addLog(translations.en.switchedToEnglish, 'info');
+
+          // 保存语言设置到本地存储
+          localStorage.setItem('language', 'en');
+        } else {
+          // 切换到中文
+          currentLanguage = 'zh';
+          languageToggleBtn.textContent = '中';
+          addLog(translations.zh.switchedToChinese, 'info');
+
+          // 保存语言设置到本地存储
+          localStorage.setItem('language', 'zh');
+        }
+
+        // 更新界面文本
+        updateUILanguage();
+      }
+
+      // 更新界面语言
+      function updateUILanguage() {
+        const t = translations[currentLanguage];
+
+        // 更新标题栏
+        document.querySelector('.text-sm.font-medium').textContent = t.title;
+
+        // 更新配置面板标题
+        document.querySelector('h2.font-medium').textContent = t.configTitle;
+
+        // 更新通信类型选择
+        const tabButtons = document.querySelectorAll('.tab-button');
+        if (tabButtons[0]) tabButtons[0].textContent = t.comSerial;
+        if (tabButtons[1]) tabButtons[1].textContent = t.udpNetwork;
+
+        // 更新COM配置
+        const comConfigH3 = document.querySelector('#com-tab h3');
+        if (comConfigH3) comConfigH3.textContent = t.comConfig;
+
+        const comLabels = document.querySelectorAll('#com-tab label');
+        if (comLabels[0]) comLabels[0].textContent = t.portNumber;
+        if (comLabels[1]) comLabels[1].textContent = t.baudRate;
+        if (comLabels[2]) comLabels[2].textContent = t.dataBits;
+        if (comLabels[3]) comLabels[3].textContent = t.stopBits;
+        if (comLabels[4]) comLabels[4].textContent = t.parity;
+
+        // 更新校验位选项
+        const parityOptions = document.querySelectorAll('#com-parity option');
+        if (parityOptions[0]) parityOptions[0].textContent = t.noParity;
+        if (parityOptions[1]) parityOptions[1].textContent = t.oddParity;
+        if (parityOptions[2]) parityOptions[2].textContent = t.evenParity;
+
+        const comConnectBtn = document.querySelector('#com-tab .btn-primary');
+        if (comConnectBtn) comConnectBtn.textContent = t.connectCom;
+
+        // 更新UDP配置
+        const udpConfigH3 = document.querySelector('#udp-tab h3');
+        if (udpConfigH3) udpConfigH3.textContent = t.udpConfig;
+
+        const udpLabels = document.querySelectorAll('#udp-tab label');
+        if (udpLabels[0]) udpLabels[0].textContent = t.remoteIp;
+        if (udpLabels[1]) udpLabels[1].textContent = t.remotePort;
+        if (udpLabels[2]) udpLabels[2].textContent = t.localIp;
+        if (udpLabels[3]) udpLabels[3].textContent = t.localPort;
+
+        const udpConnectBtn = document.querySelector('#udp-tab .btn-primary');
+        if (udpConnectBtn) udpConnectBtn.textContent = t.connectUdp;
+
+        // 更新协议配置
+        const protocolConfigH3 = document.querySelectorAll('.config-section h3')[2];
+        if (protocolConfigH3) protocolConfigH3.textContent = t.protocolConfig;
+
+        const protocolLabel = document.querySelector('#protocol-version').previousElementSibling;
+        if (protocolLabel) protocolLabel.textContent = t.protocolVersion;
+
+        const protocolOptions = document.querySelectorAll('#protocol-version option');
+        if (protocolOptions[0]) protocolOptions[0].textContent = t.protocolVersion1;
+        if (protocolOptions[1]) protocolOptions[1].textContent = t.protocolVersion2;
+        if (protocolOptions[2]) protocolOptions[2].textContent = t.protocolVersion3;
+
+        const protocolBtn = document.querySelector('.btn-success');
+        if (protocolBtn) protocolBtn.textContent = t.setProtocol;
+
+        // 更新命令配置
+        const commandConfigH3 = document.querySelectorAll('.config-section h3')[3];
+        if (commandConfigH3) commandConfigH3.textContent = t.commandConfig;
+
+        const commandLabel = document.querySelector('#command-select').previousElementSibling;
+        if (commandLabel) commandLabel.textContent = t.selectCommand;
+
+        const commandSelectOption = document.querySelector('#command-select option[value=""]');
+        if (commandSelectOption) commandSelectOption.textContent = t.selectCommandPlaceholder;
+
+        const executeBtn = document.querySelector('#execute-dynamic-cmd');
+        if (executeBtn) executeBtn.textContent = t.executeCommand;
+
+        // 更新连接控制
+        const connectionControlH3 = document.querySelectorAll('.config-section h3')[4];
+        if (connectionControlH3) connectionControlH3.textContent = t.connectionControl;
+
+        const disconnectBtn = document.querySelector('.btn-danger');
+        if (disconnectBtn) disconnectBtn.textContent = t.disconnect;
+
+        // 更新主内容区
+        const mainTabSpan = document.querySelector('.bg-app-dark .text-app-text');
+        if (mainTabSpan) mainTabSpan.textContent = t.communicationConsole;
+
+        const statusText = document.querySelector('#status-text');
+        if (statusText && statusText.textContent.includes('未连接')) {
+          statusText.textContent = t.notConnected;
+        } else if (statusText && statusText.textContent.includes('已连接')) {
+          statusText.textContent = t.connected;
+        }
+
+        // 更新命令输入区域
+        const commandNameInput = document.querySelector('#command-name');
+        if (commandNameInput) commandNameInput.placeholder = t.commandNamePlaceholder;
+
+        const commandParamsInput = document.querySelector('#command-params');
+        if (commandParamsInput) commandParamsInput.placeholder = t.commandParamsPlaceholder;
+
+        const executeCommandBtn = document.querySelector('.btn-primary[onclick="executeCommand()"]');
+        if (executeCommandBtn) executeCommandBtn.textContent = t.executeCommandBtn;
+
+        const clearOutputBtn = document.querySelector('.btn-success[onclick="clearOutput()"]');
+        if (clearOutputBtn) clearOutputBtn.textContent = t.clearOutput;
+
+        // 更新工具提示
+        const themeToggle = document.querySelector('#theme-toggle');
+        if (themeToggle) themeToggle.title = t.switchTheme;
+
+        const languageToggle = document.querySelector('#language-toggle');
+        if (languageToggle) languageToggle.title = t.switchLanguage;
+      }
+
+      // 初始化语言
+      function initializeLanguage() {
+        const savedLanguage = localStorage.getItem('language');
+        const languageToggleBtn = document.querySelector('#language-toggle span');
+
+        if (savedLanguage === 'en') {
+          currentLanguage = 'en';
+          languageToggleBtn.textContent = 'EN';
+        } else {
+          currentLanguage = 'zh';
+          languageToggleBtn.textContent = '中';
+        }
+
+        // 更新界面语言
+        updateUILanguage();
+      }
 
       // 主题切换功能
       let currentTheme = 'dark';
@@ -1086,8 +1413,9 @@
       // 初始化时检查DLL路径和模块加载
       document.addEventListener('DOMContentLoaded', function () {
         try {
-          // 初始化主题
+          // 初始化主题和语言
           initializeTheme();
+          initializeLanguage();
 
           addLog('正在初始化应用...', 'info');
 
