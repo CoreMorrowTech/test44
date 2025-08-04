@@ -17,7 +17,7 @@ function getDllPath() {
         path.join(__dirname, '../x64/Debug/app.dll'),
         'E:\\C++\\NewDll\\DLL\\x64\\Debug\\3App.dll'
     ];
-    
+
     for (const dllPath of possiblePaths) {
         if (fs.existsSync(dllPath)) {
             console.log(`找到DLL文件: ${dllPath}`);
@@ -35,7 +35,7 @@ function getConfigPath() {
         path.join(__dirname, 'config.json'),
         'E:\\C++\\NewDll\\DLL\\x64\\Debug\\config.json'
     ];
-    
+
     for (const configPath of possiblePaths) {
         if (fs.existsSync(configPath)) {
             return configPath;
@@ -76,6 +76,7 @@ class CommunicationBase {
             this.CallInitCOM = this.lib.func('CallInitCOM', 'int', ['void*', 'str', 'int', 'int', 'float', 'str']);
             this.CallSelectProtocol = this.lib.func('CallSelectProtocol', 'void', ['void*', 'int']);
             this.CallExecuteCommandJSON = this.lib.func('CallExecuteCommandJSON', 'str', ['void*', 'str']);
+            this.CallClose = this.lib.func('CallClose', 'void', ['void*']);
 
             console.log(`✓ DLL 加载成功: ${this.dllPath}`);
         } catch (error) {
@@ -154,7 +155,22 @@ class CommunicationBase {
      */
     close() {
         if (this.obj) {
-            this.DestroyCommunicationObject(this.obj);
+            try {
+                // 先调用CallClose真正关闭通信连接
+                this.CallClose(this.obj);
+                console.log('✓ 通信连接已关闭');
+            } catch (error) {
+                console.log(`关闭通信连接时出错: ${error.message}`);
+            }
+
+            // 然后销毁通信对象
+            try {
+                this.DestroyCommunicationObject(this.obj);
+                console.log('✓ 通信对象已销毁');
+            } catch (error) {
+                console.log(`销毁通信对象时出错: ${error.message}`);
+            }
+
             this.obj = null;
         }
     }
@@ -179,11 +195,11 @@ function addDynamicMethods(instance) {
             }
 
             // 避免内部属性和方法
-            if (typeof prop === 'string' && !prop.startsWith('_') && 
+            if (typeof prop === 'string' && !prop.startsWith('_') &&
                 !['lib', 'obj', 'dllPath', 'configPath'].includes(prop)) {
-                
+
                 // 返回动态生成的命令方法
-                return function(...args) {
+                return function (...args) {
                     return target.executeCommandJSON(prop, args);
                 };
             }
@@ -208,8 +224,8 @@ class COM extends CommunicationBase {
      * @param {string} dllPath - DLL 文件路径 (可选，自动检测)
      * @param {string} configPath - 配置文件路径 (可选，自动检测)
      */
-    constructor(port, baudrate, byteSize = 8, stopBits = 1.0, parity = "none", 
-                dllPath = null, configPath = null) {
+    constructor(port, baudrate, byteSize = 8, stopBits = 1.0, parity = "none",
+        dllPath = null, configPath = null) {
         super(dllPath, configPath);
 
         // 初始化 COM
@@ -247,8 +263,8 @@ class UDP extends CommunicationBase {
      * @param {string} dllPath - DLL 文件路径 (可选，自动检测)
      * @param {string} configPath - 配置文件路径 (可选，自动检测)
      */
-    constructor(remoteIp, remotePort, localIp, localPort, 
-                dllPath = null, configPath = null) {
+    constructor(remoteIp, remotePort, localIp, localPort,
+        dllPath = null, configPath = null) {
         super(dllPath, configPath);
 
         // 初始化 UDP
