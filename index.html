@@ -458,6 +458,9 @@
   </div>
 
   <script>
+    // 引入核心模块
+    const { COM, UDP, getDllPath, getConfigPath } = require('./core');
+
     // 设置版本信息
     document.getElementById('node-version').innerText = process.versions.node;
     document.getElementById('electron-version').innerText = process.versions.electron;
@@ -465,6 +468,17 @@
     // 全局变量
     let currentConnection = null;
     let connectionType = 'com';
+
+    // 初始化时检查DLL路径
+    document.addEventListener('DOMContentLoaded', function() {
+      const dllPath = getDllPath();
+      if (dllPath) {
+        addLog(`找到DLL文件: ${dllPath}`, 'success');
+      } else {
+        addLog('警告: 未找到DLL文件，请检查路径配置', 'error');
+      }
+      addLog('界面加载完成，准备就绪', 'success');
+    });
 
     // 切换标签页
     function switchTab(type) {
@@ -509,6 +523,12 @@
     // 连接COM
     async function connectCOM() {
       try {
+        // 先断开现有连接
+        if (currentConnection) {
+          currentConnection.close();
+          currentConnection = null;
+        }
+
         const port = document.getElementById('com-port').value;
         const baudrate = parseInt(document.getElementById('com-baudrate').value);
         const databits = parseInt(document.getElementById('com-databits').value);
@@ -517,16 +537,14 @@
 
         addLog(`正在连接COM端口: ${port}, 波特率: ${baudrate}...`, 'info');
 
-        // 这里应该调用实际的COM连接代码
-        // const { COM } = require('./core');
-        // currentConnection = new COM(port, baudrate, databits, stopbits, parity);
+        // 创建COM连接
+        currentConnection = new COM(port, baudrate, databits, stopbits, parity);
+        connectionType = 'com';
         
-        // 模拟连接成功
-        setTimeout(() => {
-          updateStatus(true, `COM连接成功: ${port} @ ${baudrate}bps`);
-        }, 1000);
+        updateStatus(true, `COM连接成功: ${port} @ ${baudrate}bps, ${databits}bits, ${stopbits}stop, ${parity}parity`);
 
       } catch (error) {
+        currentConnection = null;
         updateStatus(false, `COM连接失败: ${error.message}`);
       }
     }
@@ -534,6 +552,12 @@
     // 连接UDP
     async function connectUDP() {
       try {
+        // 先断开现有连接
+        if (currentConnection) {
+          currentConnection.close();
+          currentConnection = null;
+        }
+
         const remoteIp = document.getElementById('udp-remote-ip').value;
         const remotePort = parseInt(document.getElementById('udp-remote-port').value);
         const localIp = document.getElementById('udp-local-ip').value;
@@ -541,16 +565,14 @@
 
         addLog(`正在连接UDP: ${remoteIp}:${remotePort} -> ${localIp}:${localPort}...`, 'info');
 
-        // 这里应该调用实际的UDP连接代码
-        // const { UDP } = require('./core');
-        // currentConnection = new UDP(remoteIp, remotePort, localIp, localPort);
+        // 创建UDP连接
+        currentConnection = new UDP(remoteIp, remotePort, localIp, localPort);
+        connectionType = 'udp';
         
-        // 模拟连接成功
-        setTimeout(() => {
-          updateStatus(true, `UDP连接成功: ${remoteIp}:${remotePort}`);
-        }, 1000);
+        updateStatus(true, `UDP连接成功: ${remoteIp}:${remotePort} -> ${localIp}:${localPort}`);
 
       } catch (error) {
+        currentConnection = null;
         updateStatus(false, `UDP连接失败: ${error.message}`);
       }
     }
@@ -565,7 +587,7 @@
       }
 
       try {
-        // currentConnection.selectProtocol(version);
+        currentConnection.selectProtocol(version);
         addLog(`协议版本已设置为: ${version}`, 'success');
       } catch (error) {
         addLog(`协议设置失败: ${error.message}`, 'error');
@@ -618,21 +640,14 @@
       addLog(`执行命令: ${cmdName}(${params.join(', ')})`, 'info');
 
       try {
-        // 模拟命令执行
-        setTimeout(() => {
-          const mockResult = {
-            success: true,
-            data: `命令 ${cmdName} 执行成功`,
-            params: params,
-            timestamp: new Date().toISOString()
-          };
-          
-          addLog(`命令执行结果: ${JSON.stringify(mockResult, null, 2)}`, 'success');
-        }, 500);
-
-        // 实际代码应该是:
-        // const result = currentConnection.executeCommandJSON(cmdName, params);
-        // addLog(`命令执行结果: ${JSON.stringify(result, null, 2)}`, result.error ? 'error' : 'success');
+        // 使用实际的命令执行
+        const result = currentConnection.executeCommandJSON(cmdName, params);
+        
+        if (result.error) {
+          addLog(`命令执行失败: ${result.error}`, 'error');
+        } else {
+          addLog(`命令执行结果: ${JSON.stringify(result, null, 2)}`, 'success');
+        }
 
       } catch (error) {
         addLog(`命令执行失败: ${error.message}`, 'error');
@@ -643,7 +658,7 @@
     function disconnect() {
       if (currentConnection) {
         try {
-          // currentConnection.close();
+          currentConnection.close();
           currentConnection = null;
           updateStatus(false, '连接已断开');
         } catch (error) {

@@ -34,5 +34,10 @@
   "devDependencies": {
     "electron": "^37.2.5",
     "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "communication_wrapper": "^1.0.1",
+    "ffi-napi": "^4.0.3",
+    "ref-napi": "^3.0.3"
   }
 }
