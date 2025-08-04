@@ -68,5 +68,4 @@ jobs:
           ./dist/我的Electron应用 Setup ${{ steps.package-version.outputs.version }}.exe
         token: ${{ secrets.GITHUB_TOKEN }}
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ github.token }}  # 内置令牌
