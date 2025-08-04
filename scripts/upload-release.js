@@ -6,7 +6,7 @@ const https = require('https');
 const config = {
   owner: 'your-username',        // 替换为你的GitHub用户名
   repo: 'your-repo-name',        // 替换为你的仓库名
-  token: process.env.GITHUB_TOKEN || 'your-github-token', // GitHub Personal Access Token
+  token: process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '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', // GitHub Personal Access Token
 };
 
 // 从package.json读取版本

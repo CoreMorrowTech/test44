@@ -6,6 +6,9 @@ on:
       - 'v*'  # 当推送标签时触发，如 v1.0.0
   workflow_dispatch:  # 允许手动触发
 
+permissions:
+  contents: write  # 允许创建 releases 和上传文件
+
 jobs:
   build-and-release:
     runs-on: windows-latest
@@ -32,32 +35,37 @@ jobs:
         $version = (Get-Content package.json | ConvertFrom-Json).version
         echo "version=$version" >> $env:GITHUB_OUTPUT
         
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create Release and Upload Assets
+      uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ steps.package-version.outputs.version }}
-        release_name: Version ${{ steps.package-version.outputs.version }}
+        name: Version ${{ steps.package-version.outputs.version }}
         body: |
-          ## 更新内容
-          - 自动构建发布
-          - 版本: ${{ steps.package-version.outputs.version }}
+          ## 🚀 版本 ${{ steps.package-version.outputs.version }} 更新内容
           
-          ## 安装说明
-          1. 下载下方的 exe 文件
+          - ✨ 新功能和改进
+          - 🐛 Bug修复和优化
+          - 📦 自动构建发布
+          
+          ## 📥 安装说明
+          
+          1. 下载下方的 `CodeLinear-Setup-${{ steps.package-version.outputs.version }}.exe` 文件
           2. 运行安装程序
           3. 按照提示完成安装
+          
+          ## 📋 系统要求
+          
+          - Windows 10 或更高版本
+          - 64位系统
+          
+          ---
+          
+          **构建时间**: ${{ github.event.head_commit.timestamp }}  
+          **提交**: ${{ github.sha }}
         draft: false
         prerelease: false
-        
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
+        files: |
+          ./dist/我的Electron应用 Setup ${{ steps.package-version.outputs.version }}.exe
+        token: ${{ secrets.GITHUB_TOKEN }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/我的Electron应用 Setup ${{ steps.package-version.outputs.version }}.exe
-        asset_name: CodeLinear-Setup-${{ steps.package-version.outputs.version }}.exe
-        asset_content_type: application/octet-stream
