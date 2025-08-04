@@ -400,7 +400,28 @@
 </head>
 
 <body>
-  <div class="flex h-screen overflow-hidden">
+  <!-- Custom Title Bar -->
+  <div class="bg-app-dark border-b border-app-light flex items-center justify-between h-8 px-4 select-none" style="-webkit-app-region: drag;">
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 bg-app-highlight rounded-full flex items-center justify-center">
+        <i class="fas fa-code text-white text-xs"></i>
+      </div>
+      <span class="text-app-text text-sm font-medium">CodeLinear - 通信控制台</span>
+    </div>
+    <div class="flex items-center space-x-1" style="-webkit-app-region: no-drag;">
+      <button class="w-6 h-6 flex items-center justify-center rounded hover:bg-app-light text-app-text-dim hover:text-app-text transition-colors" onclick="minimizeWindow()">
+        <i class="fas fa-minus text-xs"></i>
+      </button>
+      <button class="w-6 h-6 flex items-center justify-center rounded hover:bg-app-light text-app-text-dim hover:text-app-text transition-colors" onclick="maximizeWindow()">
+        <i class="fas fa-square text-xs"></i>
+      </button>
+      <button class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-600 text-app-text-dim hover:text-white transition-colors" onclick="closeWindow()">
+        <i class="fas fa-times text-xs"></i>
+      </button>
+    </div>
+  </div>
+  
+  <div class="flex overflow-hidden" style="height: calc(100vh - 2rem);">
     <!-- Sidebar -->
     <div class="w-14 bg-app-dark border-r border-app-light flex flex-col items-center py-4">
       <div class="w-8 h-8 bg-app-highlight rounded-md mb-8 flex items-center justify-center">
@@ -621,6 +642,58 @@
   <script>
     // 引入核心模块 - 使用koffi版本
     const { COM, UDP, getDllPath, getConfigPath } = require('./core-koffi');
+    const { ipcRenderer } = require('electron');
+
+    // 窗口控制函数
+    function minimizeWindow() {
+      try {
+        const { remote } = require('electron');
+        const window = remote.getCurrentWindow();
+        window.minimize();
+      } catch (error) {
+        // 如果remote不可用，尝试使用全局窗口实例
+        if (global.mainWindow) {
+          global.mainWindow.minimize();
+        }
+      }
+    }
+
+    function maximizeWindow() {
+      try {
+        const { remote } = require('electron');
+        const window = remote.getCurrentWindow();
+        if (window.isMaximized()) {
+          window.unmaximize();
+        } else {
+          window.maximize();
+        }
+      } catch (error) {
+        // 如果remote不可用，尝试使用全局窗口实例
+        if (global.mainWindow) {
+          if (global.mainWindow.isMaximized()) {
+            global.mainWindow.unmaximize();
+          } else {
+            global.mainWindow.maximize();
+          }
+        }
+      }
+    }
+
+    function closeWindow() {
+      try {
+        const { remote } = require('electron');
+        const window = remote.getCurrentWindow();
+        window.close();
+      } catch (error) {
+        // 如果remote不可用，尝试使用全局窗口实例
+        if (global.mainWindow) {
+          global.mainWindow.close();
+        } else {
+          // 最后的备选方案
+          window.close();
+        }
+      }
+    }
 
     // 设置版本信息
     document.getElementById('node-version').innerText = process.versions.node;

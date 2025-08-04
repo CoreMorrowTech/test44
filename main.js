@@ -5,6 +5,10 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    frame: false,  // 移除标题栏
+    titleBarStyle: 'hidden',  // 隐藏标题栏
+    minWidth: 1080,
+    minHeight: 600,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -12,6 +16,9 @@ function createWindow() {
       webSecurity: false  // 允许加载本地文件和原生模块
     }
   });
+
+  // 将窗口实例暴露给渲染进程
+  global.mainWindow = mainWindow;
 
   mainWindow.loadFile('index.html');
   
