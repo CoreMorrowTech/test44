@@ -22,7 +22,7 @@ function addDevice(deviceModel) {
 
     // 创建图片容器
     const imgContainer = createImageContainer(deviceModel, deviceElement, frame2);
-    
+
     // 创建控制容器
     const controlContainer = createControlContainer(deviceId);
 
@@ -49,11 +49,12 @@ function createImageContainer(deviceModel, deviceElement, frame2) {
     const deviceImg = document.createElement('div');
     deviceImg.className = 'device-img';
     deviceImg.style.backgroundImage = `url('${deviceImageMap[deviceModel] || '3.png'}')`;
-    deviceImg.style.width = '100%';
-    deviceImg.style.height = '100%';
+    deviceImg.style.width = '60%';
+    deviceImg.style.height = '50%';
     deviceImg.style.backgroundSize = 'contain';
-    deviceImg.style.backgroundPosition = 'center';
+    deviceImg.style.backgroundPosition = 'center center';
     deviceImg.style.backgroundRepeat = 'no-repeat';
+    deviceImg.style.margin = '0 auto';
     imgContainer.appendChild(deviceImg);
 
     // 删除按钮
@@ -230,7 +231,8 @@ function createModeContainer(deviceId, mode) {
     inputField.style.width = '80%';
     inputField.style.padding = '5px';
     inputField.style.fontSize = '0.7em';
-    inputField.style.border = '1px solid #ccc';
+    inputField.style.border = 'none';
+    inputField.style.borderBottom = '1px solid black';
     modeContainer.appendChild(inputField);
 
     // 操作按钮
