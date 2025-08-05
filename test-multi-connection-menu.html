@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Connection Menu Test</title>
+    <style>
+        .menu-bar {
+            background-color: #3e3e3e;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            height: 50px;
+        }
+
+        .menu-item {
+            color: #fff;
+            font-size: 16px;
+            margin-right: 20px;
+            cursor: pointer;
+            padding: 10px 15px;
+            position: relative;
+        }
+
+        .menu-item:hover {
+            background-color: #c80025;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #3e3e3e;
+            min-width: 250px;
+            left: 0;
+            top: 100%;
+            z-index: 1;
+        }
+
+        .dropdown-content div {
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .dropdown-content div:hover {
+            background-color: #c80025;
+        }
+
+        .test-buttons {
+            margin: 20px;
+        }
+
+        .test-buttons button {
+            margin: 5px;
+            padding: 10px 15px;
+            background-color: #c80025;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .connection-info {
+            margin: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="menu-bar">
+        <div class="menu-item dropdown">
+            File
+            <div class="dropdown-content">
+                <div>Import Device</div>
+                <div>New/Edit Device</div>
+            </div>
+        </div>
+        <div class="menu-item dropdown">
+            Settings
+            <div class="dropdown-content">
+                <div>System Language/Language</div>
+            </div>
+        </div>
+        <div class="menu-item dropdown">
+            Help
+            <div class="dropdown-content">
+                <div>User Manual</div>
+                <div>About</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-buttons">
+        <button onclick="testAddConnection1()">Add Connection 1 (RS-232)</button>
+        <button onclick="testAddConnection2()">Add Connection 2 (USB-VCP)</button>
+        <button onclick="testAddConnection3()">Add Connection 3 (LAN-UDP)</button>
+        <button onclick="testRemoveConnection1()">Remove Connection 1</button>
+        <button onclick="testRemoveAllConnections()">Remove All Connections</button>
+        <button onclick="testLanguageToggle()">Toggle Language</button>
+    </div>
+
+    <div class="connection-info">
+        <h3>Active Connections:</h3>
+        <div id="connectionList">No active connections</div>
+    </div>
+
+    <script>
+        // 模拟全局变量
+        let currentLanguage = 'en';
+        let connectionMenu = null;
+        let activeConnections = new Map();
+
+        // 更新Connection菜单显示所有活跃连接
+        function updateConnectionMenu() {
+            // 如果没有活跃连接，移除菜单
+            if (activeConnections.size === 0) {
+                removeConnectionMenu();
+                updateConnectionList();
+                return;
+            }
+
+            // 如果Connection菜单已存在，先移除
+            if (connectionMenu) {
+                removeConnectionMenu();
+            }
+
+            const menuBar = document.querySelector('.menu-bar');
+            const connectionText = currentLanguage === 'zh' ? '连接' : 'Connection';
+            const disconnectAllText = currentLanguage === 'zh' ? '断开所有连接' : 'Disconnect All';
+            
+            // 创建Connection菜单项
+            connectionMenu = document.createElement('div');
+            connectionMenu.className = 'menu-item dropdown';
+            
+            // 构建下拉菜单内容
+            let dropdownContent = '<div class="dropdown-content">';
+            
+            // 添加每个连接的信息
+            activeConnections.forEach((connection, connectionKey) => {
+                const { deviceName, deviceAddress, connectionType } = connection;
+                const displayInfo = `${deviceName}/${deviceAddress}/${connectionType}`;
+                const disconnectText = currentLanguage === 'zh' ? '断开' : 'Disconnect';
+                
+                dropdownContent += `
+                    <div>${displayInfo}</div>
+                    <div onclick="disconnectSpecificConnection('${connectionKey}')" style="padding-left: 20px; font-size: 0.9em; color: #ccc;">${disconnectText}</div>
+                `;
+            });
+            
+            // 如果有多个连接，添加断开所有连接的选项
+            if (activeConnections.size > 1) {
+                dropdownContent += `<div onclick="disconnectAllConnections()" style="border-top: 1px solid #555; margin-top: 5px; padding-top: 5px;">${disconnectAllText}</div>`;
+            }
+            
+            dropdownContent += '</div>';
+            
+            connectionMenu.innerHTML = `${connectionText}${dropdownContent}`;
+
+            connectionMenu.addEventListener('mouseenter', function () {
+                this.querySelector('.dropdown-content').style.display = 'block';
+            });
+            connectionMenu.addEventListener('mouseleave', function () {
+                this.querySelector('.dropdown-content').style.display = 'none';
+            });
+
+            // 将Connection菜单插入到File菜单的左边（最前面）
+            const firstMenu = menuBar.querySelector('.menu-item.dropdown');
+            menuBar.insertBefore(connectionMenu, firstMenu);
+
+            console.log(`Connection菜单已更新，显示${activeConnections.size}个连接`);
+            updateConnectionList();
+        }
+
+        function removeConnectionMenu() {
+            if (connectionMenu && connectionMenu.parentNode) {
+                connectionMenu.parentNode.removeChild(connectionMenu);
+                connectionMenu = null;
+                console.log('Connection菜单已移除');
+            }
+        }
+
+        function disconnectSpecificConnection(connectionKey) {
+            if (activeConnections.has(connectionKey)) {
+                const connection = activeConnections.get(connectionKey);
+                activeConnections.delete(connectionKey);
+                console.log(`断开连接: ${connection.deviceName}/${connection.deviceAddress}/${connection.connectionType}`);
+                updateConnectionMenu();
+            }
+        }
+
+        function disconnectAllConnections() {
+            console.log('断开所有连接');
+            activeConnections.clear();
+            updateConnectionMenu();
+        }
+
+        function updateConnectionList() {
+            const listElement = document.getElementById('connectionList');
+            if (activeConnections.size === 0) {
+                listElement.textContent = 'No active connections';
+            } else {
+                let listHTML = '';
+                activeConnections.forEach((connection, key) => {
+                    listHTML += `<div>${connection.deviceName}/${connection.deviceAddress}/${connection.connectionType}</div>`;
+                });
+                listElement.innerHTML = listHTML;
+            }
+        }
+
+        // 初始化下拉菜单
+        document.querySelectorAll('.dropdown').forEach(dropdown => {
+            dropdown.addEventListener('mouseenter', function () {
+                this.querySelector('.dropdown-content').style.display = 'block';
+            });
+            dropdown.addEventListener('mouseleave', function () {
+                this.querySelector('.dropdown-content').style.display = 'none';
+            });
+        });
+
+        // 测试函数
+        function testAddConnection1() {
+            const connectionKey = 'device-001-RS-232';
+            activeConnections.set(connectionKey, {
+                deviceId: 'device-001',
+                connectionType: 'RS-232',
+                deviceName: 'Device Model 1',
+                deviceAddress: '8'
+            });
+            updateConnectionMenu();
+        }
+
+        function testAddConnection2() {
+            const connectionKey = 'device-002-USB-VCP';
+            activeConnections.set(connectionKey, {
+                deviceId: 'device-002',
+                connectionType: 'USB-VCP',
+                deviceName: 'Device Model 2',
+                deviceAddress: '9'
+            });
+            updateConnectionMenu();
+        }
+
+        function testAddConnection3() {
+            const connectionKey = 'device-003-LAN-UDP';
+            activeConnections.set(connectionKey, {
+                deviceId: 'device-003',
+                connectionType: 'LAN-UDP',
+                deviceName: 'Device Model 3',
+                deviceAddress: '10'
+            });
+            updateConnectionMenu();
+        }
+
+        function testRemoveConnection1() {
+            disconnectSpecificConnection('device-001-RS-232');
+        }
+
+        function testRemoveAllConnections() {
+            disconnectAllConnections();
+        }
+
+        function testLanguageToggle() {
+            currentLanguage = currentLanguage === 'en' ? 'zh' : 'en';
+            console.log('Language switched to:', currentLanguage);
+            updateConnectionMenu();
+        }
+    </script>
+</body>
+</html>

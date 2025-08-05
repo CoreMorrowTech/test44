@@ -79,14 +79,15 @@ function toggleLanguage() {
 }
 
 /**
- * 添加Connection菜单到菜单栏
- * @param {string} deviceId - 设备ID
- * @param {string} connectionType - 连接类型
- * @param {string} connectionInfo - 连接信息
- * @param {string} deviceName - 设备名称
- * @param {string} deviceAddress - 设备地址
+ * 更新Connection菜单显示所有活跃连接
  */
-function addConnectionMenu(deviceId, connectionType, connectionInfo, deviceName = '', deviceAddress = '') {
+function updateConnectionMenu() {
+    // 如果没有活跃连接，移除菜单
+    if (typeof activeConnections === 'undefined' || activeConnections.size === 0) {
+        removeConnectionMenu();
+        return;
+    }
+
     // 如果Connection菜单已存在，先移除
     if (connectionMenu) {
         removeConnectionMenu();
@@ -94,21 +95,35 @@ function addConnectionMenu(deviceId, connectionType, connectionInfo, deviceName 
 
     const menuBar = document.querySelector('.menu-bar');
     const connectionText = currentLanguage === 'zh' ? '连接' : 'Connection';
-    
-    // 格式化显示信息：设备名称/地址/连接方式
-    const displayInfo = `${deviceName || deviceId}/${deviceAddress || 'N/A'}/${connectionType}`;
-    const disconnectText = currentLanguage === 'zh' ? '断开连接' : 'Disconnect';
+    const disconnectAllText = currentLanguage === 'zh' ? '断开所有连接' : 'Disconnect All';
     
     // 创建Connection菜单项
     connectionMenu = document.createElement('div');
     connectionMenu.className = 'menu-item dropdown';
-    connectionMenu.innerHTML = `
-        ${connectionText}
-        <div class="dropdown-content">
+    
+    // 构建下拉菜单内容
+    let dropdownContent = '<div class="dropdown-content">';
+    
+    // 添加每个连接的信息
+    activeConnections.forEach((connection, connectionKey) => {
+        const { deviceName, deviceAddress, connectionType } = connection;
+        const displayInfo = `${deviceName}/${deviceAddress}/${connectionType}`;
+        const disconnectText = currentLanguage === 'zh' ? '断开' : 'Disconnect';
+        
+        dropdownContent += `
             <div>${displayInfo}</div>
-            <div onclick="disconnectCurrentConnection()">${disconnectText}</div>
-        </div>
-    `;
+            <div onclick="disconnectSpecificConnection('${connectionKey}')" style="padding-left: 20px; font-size: 0.9em; color: #ccc;">${disconnectText}</div>
+        `;
+    });
+    
+    // 如果有多个连接，添加断开所有连接的选项
+    if (activeConnections.size > 1) {
+        dropdownContent += `<div onclick="disconnectAllConnections()" style="border-top: 1px solid #555; margin-top: 5px; padding-top: 5px;">${disconnectAllText}</div>`;
+    }
+    
+    dropdownContent += '</div>';
+    
+    connectionMenu.innerHTML = `${connectionText}${dropdownContent}`;
 
     // 添加鼠标悬停事件
     connectionMenu.addEventListener('mouseenter', function () {
@@ -122,7 +137,7 @@ function addConnectionMenu(deviceId, connectionType, connectionInfo, deviceName 
     const firstMenu = menuBar.querySelector('.menu-item.dropdown');
     menuBar.insertBefore(connectionMenu, firstMenu);
 
-    console.log(`Connection菜单已添加: ${displayInfo}`);
+    console.log(`Connection菜单已更新，显示${activeConnections.size}个连接`);
 }
 
 /**

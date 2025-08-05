@@ -2,8 +2,8 @@
  * 连接管理功能
  */
 
-// 存储当前活跃连接的信息
-let currentActiveConnection = null;
+// 存储所有活跃连接的信息
+let activeConnections = new Map();
 
 /**
  * 连接设备函数
@@ -60,26 +60,6 @@ function connectDevice(deviceId, connectionType, connectionInfo, button) {
         // 存储连接实例
         connectionInstances.set(connectionKey, connection);
 
-        // 存储当前活跃连接信息
-        currentActiveConnection = {
-            deviceId: deviceId,
-            connectionType: connectionType,
-            connectionInfo: connectionInfo,
-            connectionKey: connectionKey,
-            button: button
-        };
-
-        // 更新按钮状态
-        button.style.backgroundColor = '#28a745'; // 绿色表示已连接
-        button.textContent = 'Connected';
-
-        // 更新同行的断开按钮状态
-        const disconnectBtn = button.parentElement.querySelector('button:last-child');
-        if (disconnectBtn) {
-            disconnectBtn.style.backgroundColor = '#c80025';
-            disconnectBtn.style.cursor = 'pointer';
-        }
-
         // 获取设备名称和地址信息
         const deviceElement = document.getElementById(deviceId);
         let deviceName = 'Device Model 1'; // 默认设备名称
@@ -119,9 +99,31 @@ function connectDevice(deviceId, connectionType, connectionInfo, button) {
             }
         }
 
-        // 添加Connection菜单到菜单栏
-        if (typeof addConnectionMenu === 'function') {
-            addConnectionMenu(deviceId, connectionType, connectionInfo, deviceName, deviceAddress);
+        // 存储活跃连接信息
+        activeConnections.set(connectionKey, {
+            deviceId: deviceId,
+            connectionType: connectionType,
+            connectionInfo: connectionInfo,
+            connectionKey: connectionKey,
+            button: button,
+            deviceName: deviceName,
+            deviceAddress: deviceAddress
+        });
+
+        // 更新按钮状态
+        button.style.backgroundColor = '#28a745'; // 绿色表示已连接
+        button.textContent = 'Connected';
+
+        // 更新同行的断开按钮状态
+        const disconnectBtn = button.parentElement.querySelector('button:last-child');
+        if (disconnectBtn) {
+            disconnectBtn.style.backgroundColor = '#c80025';
+            disconnectBtn.style.cursor = 'pointer';
+        }
+
+        // 更新Connection菜单显示所有连接
+        if (typeof updateConnectionMenu === 'function') {
+            updateConnectionMenu();
         }
 
         console.log(`设备 ${deviceId} 通过 ${connectionType} 连接成功`);
@@ -163,11 +165,14 @@ function disconnectDevice(deviceId, connectionType, button) {
             connectBtn.textContent = 'Connect';
         }
 
-        // 如果断开的是当前活跃连接，清除活跃连接信息并移除Connection菜单
-        if (currentActiveConnection && currentActiveConnection.connectionKey === connectionKey) {
-            currentActiveConnection = null;
-            if (typeof removeConnectionMenu === 'function') {
-                removeConnectionMenu();
+        // 从活跃连接中移除该连接
+        if (activeConnections.has(connectionKey)) {
+            activeConnections.delete(connectionKey);
+            console.log(`已从活跃连接中移除: ${connectionKey}`);
+            
+            // 更新Connection菜单
+            if (typeof updateConnectionMenu === 'function') {
+                updateConnectionMenu();
             }
         }
 
@@ -177,11 +182,13 @@ function disconnectDevice(deviceId, connectionType, button) {
 }
 
 /**
- * 断开当前活跃连接（从Connection菜单调用）
+ * 断开指定连接（从Connection菜单调用）
+ * @param {string} connectionKey - 连接键值
  */
-function disconnectCurrentActiveConnection() {
-    if (currentActiveConnection) {
-        const { deviceId, connectionType, button } = currentActiveConnection;
+function disconnectSpecificConnection(connectionKey) {
+    const connection = activeConnections.get(connectionKey);
+    if (connection) {
+        const { deviceId, connectionType, button } = connection;
         
         // 找到对应的断开按钮
         const disconnectBtn = button.parentElement.querySelector('button:last-child');
@@ -192,6 +199,16 @@ function disconnectCurrentActiveConnection() {
             disconnectDevice(deviceId, connectionType, button);
         }
     }
+}
+
+/**
+ * 断开所有活跃连接
+ */
+function disconnectAllConnections() {
+    const connections = Array.from(activeConnections.values());
+    connections.forEach(connection => {
+        disconnectSpecificConnection(connection.connectionKey);
+    });
 }
 
 /**
