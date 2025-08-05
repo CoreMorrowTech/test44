@@ -372,7 +372,7 @@ function generateInputField(param, channel, commandName) {
  */
 function generateOutputField(ret, channel, commandName) {
     const fieldId = `${commandName}_${ret.name}_output_${channel}`;
-    return `<input type="text" id="${fieldId}" readonly style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px; background-color: #f8f9fa; font-size: 14px; color: #495057; font-weight: 500;">`;
+    return `<input type="text" id="${fieldId}" readonly style="width: 100%; padding: 8px; border: none; border-bottom: 2px solid #6c9bd1; border-radius: 0; background: transparent; font-size: 14px; color: #495057; font-weight: 500; outline: none;">`;
 }
 
 /**
