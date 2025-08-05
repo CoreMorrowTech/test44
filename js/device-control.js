@@ -4,6 +4,7 @@
 
 // 存储当前设备控制界面状态
 let currentDeviceInterface = null;
+let currentDeviceConnection = null; // 存储当前设备控制界面对应的连接信息
 let deviceConfig = null;
 let commandConfig = null;
 
@@ -136,6 +137,7 @@ function generateDeviceControlInterface(connection) {
     // 添加到页面
     document.body.appendChild(controlInterface);
     currentDeviceInterface = controlInterface;
+    currentDeviceConnection = connection; // 存储当前连接信息
 
     // 默认显示第一个选项卡
     if (device.function.length > 0) {
@@ -380,39 +382,142 @@ function executeCommand(commandName, channel) {
             return;
         }
 
-        // 收集参数值
-        const params = {};
+        // 获取当前连接的通信实例
+        const currentConnection = getCurrentActiveConnection();
+        if (!currentConnection) {
+            console.error('未找到活跃连接');
+            return;
+        }
+
+        const connectionInstance = connectionInstances.get(currentConnection.connectionKey);
+        if (!connectionInstance) {
+            console.error('未找到连接实例');
+            return;
+        }
+
+        // 收集参数值并构建参数数组
+        const params = [];
         command.params.forEach(param => {
+            let value;
             if (param.name === 'ADDRESS') {
                 // 从连接信息获取地址
-                const connection = Array.from(activeConnections.values())[0]; // 简化处理，取第一个连接
-                params[param.name] = parseInt(connection.deviceAddress);
+                value = parseInt(currentConnection.deviceAddress);
             } else if (param.name === 'CHANNEL') {
-                params[param.name] = channel;
+                value = channel;
             } else {
                 const fieldId = `${commandName}_${param.name}_${channel}`;
                 const field = document.getElementById(fieldId);
                 if (field) {
-                    let value = field.value;
+                    value = field.value;
                     // 根据类型转换值
                     if (param.type === 'int') {
                         value = parseInt(value) || 0;
                     } else if (param.type === 'float') {
                         value = parseFloat(value) || 0.0;
                     }
-                    params[param.name] = value;
+                } else {
+                    value = param.type === 'int' ? 0 : (param.type === 'float' ? 0.0 : '');
                 }
             }
+            params.push(value);
         });
 
-        console.log(`执行命令: ${commandName}`, params);
+        console.log(`执行命令: ${commandName}(${params.join(', ')})`);
 
-        // 模拟命令执行结果
-        simulateCommandExecution(command, channel, params);
+        // 调用真实的executeCommandJSON函数
+        const result = connectionInstance.executeCommandJSON(commandName, params);
+        
+        // 处理执行结果
+        handleCommandResult(command, channel, result, params);
 
     } catch (error) {
         console.error('执行命令失败:', error);
+        // 显示错误信息到输出框
+        showErrorInOutputFields(command, channel, error.message);
     }
+}
+
+/**
+ * 获取当前活跃连接（用于设备控制界面）
+ * @returns {Object|null} 当前连接信息
+ */
+function getCurrentActiveConnection() {
+    // 返回当前设备控制界面对应的连接信息
+    return currentDeviceConnection;
+}
+
+/**
+ * 处理命令执行结果
+ * @param {Object} command - 命令配置
+ * @param {number} channel - 通道号
+ * @param {Object} result - 执行结果
+ * @param {Array} params - 执行参数
+ */
+function handleCommandResult(command, channel, result, params) {
+    if (result.error) {
+        console.error(`命令执行失败: ${result.error}`);
+        showErrorInOutputFields(command, channel, result.error);
+        return;
+    }
+
+    console.log(`命令 ${command.name} 执行成功:`, result);
+
+    // 将结果显示到输出框
+    if (result.data && Array.isArray(result.data)) {
+        // 如果返回的是数组数据，按位置映射到返回值字段
+        command.returns.forEach((ret, index) => {
+            const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+            const field = document.getElementById(fieldId);
+            if (field && result.data[index] !== undefined) {
+                field.value = result.data[index];
+            }
+        });
+    } else if (result.data && typeof result.data === 'object') {
+        // 如果返回的是对象，按名称映射
+        command.returns.forEach(ret => {
+            const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+            const field = document.getElementById(fieldId);
+            if (field && result.data[ret.name] !== undefined) {
+                field.value = result.data[ret.name];
+            }
+        });
+    } else {
+        // 简单的成功响应，显示默认值
+        command.returns.forEach(ret => {
+            const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+            const field = document.getElementById(fieldId);
+            if (field) {
+                if (ret.type === 'str') {
+                    field.value = ret.name === 'O' ? 'O' : 'K';
+                } else if (ret.type === 'int') {
+                    field.value = channel.toString();
+                } else if (ret.type === 'float') {
+                    field.value = params.find(p => typeof p === 'number' && p % 1 !== 0) || '0.0';
+                }
+            }
+        });
+    }
+}
+
+/**
+ * 在输出框中显示错误信息
+ * @param {Object} command - 命令配置
+ * @param {number} channel - 通道号
+ * @param {string} errorMessage - 错误信息
+ */
+function showErrorInOutputFields(command, channel, errorMessage) {
+    command.returns.forEach(ret => {
+        const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.value = `Error: ${errorMessage}`;
+            field.style.color = 'red';
+            // 3秒后恢复正常颜色
+            setTimeout(() => {
+                field.style.color = '';
+            }, 3000);
+        }
+    });
 }
 
 /**
@@ -451,6 +556,9 @@ function closeDeviceControlInterface() {
         document.body.removeChild(currentDeviceInterface);
         currentDeviceInterface = null;
     }
+
+    // 清除当前连接信息
+    currentDeviceConnection = null;
 
     // 显示主界面
     showMainInterface();
