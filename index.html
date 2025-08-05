@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>芯明天纳米运动控制软件</title>
+    <title>CoreMorrow Nano Motion Control Software</title>
     <style>
         * {
             margin: 0;
@@ -11,7 +12,7 @@
             box-sizing: border-box;
             font-family: "Microsoft YaHei", sans-serif;
         }
-        
+
         body {
             width: 100vw;
             height: 100vh;
@@ -22,7 +23,7 @@
             background-position: center;
             background-repeat: no-repeat;
         }
-        
+
         .title {
             position: absolute;
             left: 37.5%;
@@ -35,7 +36,7 @@
             text-align: center;
             line-height: 4.63vh;
         }
-        
+
         .subtitle {
             position: absolute;
             left: 28.57%;
@@ -48,7 +49,7 @@
             text-align: center;
             line-height: 2.78vh;
         }
-        
+
         .frame {
             position: absolute;
             left: 13.8%;
@@ -65,7 +66,7 @@
             padding: 0.42%;
             overflow-x: auto;
         }
-        
+
         .frame2 {
             position: absolute;
             margin: 2.71% 0 0 2.71%;
@@ -78,7 +79,7 @@
             display: flex;
             flex-direction: column;
         }
-        
+
         .search-box {
             position: absolute;
             left: 3.125%;
@@ -88,7 +89,7 @@
             padding: 0.26%;
             font-size: 0.73vw;
         }
-        
+
         .search-btn {
             position: absolute;
             left: 10.3%;
@@ -103,14 +104,15 @@
             border: 0px solid #000;
 
         }
+
         .device {
             display: inline-block;
             margin: 0.82%;
             width: 9.11%;
         }
-        
+
         .device-img {
-            
+
             width: 115%;
             height: 10.47vh;
             background-color: #4629c7;
@@ -118,14 +120,14 @@
             background-position: center;
             background-repeat: no-repeat;
         }
-        
+
         .device-label-container {
             display: flex;
             width: 115%;
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .device-label {
             width: 81.14%;
             height: 2.87vh;
@@ -134,7 +136,7 @@
             line-height: 2.87vh;
             font-size: 0.73vw;
         }
-        
+
         .device-btn {
             width: 18.86%;
             height: 2.87vh;
@@ -146,6 +148,7 @@
             border: 0px solid #000;
             cursor: pointer;
         }
+
         .remove-btn {
             width: 18.86%;
             height: 2.87vh;
@@ -157,7 +160,7 @@
             border: 0px solid #000;
             cursor: pointer;
         }
-        
+
         .close-btn {
             position: absolute;
             color: white;
@@ -206,7 +209,7 @@
 
         .dropdown-content {
             display: none;
-            
+
             position: absolute;
             background-color: #3e3e3e;
             min-width: 140%;
@@ -226,106 +229,105 @@
         .dropdown-content div:hover {
             background-color: #c80025;
         }
-        
-        
     </style>
 </head>
+
 <body>
     <div class="menu-bar">
         <div class="menu-item dropdown">
-            文件
+            File
             <div class="dropdown-content">
-                <div>导入设备</div>
-                <div>新建/编辑设备</div>
-                <div>导出页面记录</div>
-                <div>文件关闭</div>
-                <div>当前窗口退出</div>
+                <div>Import Device</div>
+                <div>New/Edit Device</div>
+                <div>Export Page Records</div>
+                <div>Close File</div>
+                <div>Exit Current Window</div>
             </div>
         </div>
         <div class="menu-item dropdown">
-            信息
+            Info
             <div class="dropdown-content">
-                <div>出厂报告查询</div>
+                <div>Factory Report Query</div>
             </div>
         </div>
         <div class="menu-item dropdown">
-            设置
+            Settings
             <div class="dropdown-content">
-                <div>标定参数设置</div>
-                <div>调试参数设置</div>
-                <div>控制器固件升级</div>
-                <div>系统语言/Language</div>
+                <div>Calibration Parameter Settings</div>
+                <div>Debug Parameter Settings</div>
+                <div>Controller Firmware Upgrade</div>
+                <div>System Language/Language</div>
             </div>
         </div>
         <div class="menu-item dropdown">
-            帮助
+            Help
             <div class="dropdown-content">
-                <div>用户手册</div>
-                <div>帮助视频</div>
-                <div>检查更新</div>
-                <div>更新内容</div>
-                <div>关于</div>
+                <div>User Manual</div>
+                <div>Help Videos</div>
+                <div>Check for Updates</div>
+                <div>Update Content</div>
+                <div>About</div>
             </div>
         </div>
     </div>
 
 
-    <h1 class="title">芯明天纳米运动控制软件</h1>
+    <h1 class="title">CoreMorrow Nano Motion Control Software</h1>
     <h2 class="subtitle">COREMORROW NANO MOTION CONTROL SOFTWARE</h2>
-    
+
     <div class="frame">
         <div class="device">
             <div class="device-img" style="background-image: url('3.png')"></div>
             <div class="device-label-container">
-                <div class="device-label">设备型号1</div>
-                <div class="device-btn" onclick="addDevice('设备型号1')"></div>
+                <div class="device-label">Device Model 1</div>
+                <div class="device-btn" onclick="addDevice('Device Model 1')"></div>
             </div>
         </div>
-        
+
         <div class="device">
             <div class="device-img" style="background-image: url('E53.D3E-J缩略图.jpg')"></div>
             <div class="device-label-container">
-                <div class="device-label">设备型号2</div>
-                <div class="device-btn" onclick="addDevice('设备型号2')"></div>
+                <div class="device-label">Device Model 2</div>
+                <div class="device-btn" onclick="addDevice('Device Model 2')"></div>
             </div>
         </div>
-        
-        
+
+
     </div>
-    
+
     <div class="frame2" id="frame2"></div>
-    
-    <input type="text" class="search-box" placeholder="输入产品型号" id="searchInput">
+
+    <input type="text" class="search-box" placeholder="Enter product model" id="searchInput">
     <button class="search-btn" onclick="searchDevice()"></button>
-    <div class="close-btn" onclick="window.close()">退 出</div>
-    
+    <div class="close-btn" onclick="window.close()">Exit</div>
+
     <script>
         // 显示/隐藏下拉菜单
         document.querySelectorAll('.dropdown').forEach(dropdown => {
-            dropdown.addEventListener('mouseenter', function() {
+            dropdown.addEventListener('mouseenter', function () {
                 this.querySelector('.dropdown-content').style.display = 'block';
             });
-            dropdown.addEventListener('mouseleave', function() {
+            dropdown.addEventListener('mouseleave', function () {
                 this.querySelector('.dropdown-content').style.display = 'none';
             });
         });
         function searchDevice() {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             const devices = document.querySelectorAll('.device');
-            
+
             devices.forEach(device => {
                 const label = device.querySelector('.device-label');
                 const shouldShow = label.textContent.toLowerCase().includes(searchText);
                 device.style.display = shouldShow ? 'inline-block' : 'none';
             });
         }
-        
-        // 设备型号到图片的映射
+
+        // Device model to image mapping
         const deviceImageMap = {
-            '设备型号1': '1.png',
-            '设备型号2': 'E53.D3E-J缩略图.jpg',
-            '设备型号3': '3.png',
-            '设备型号4': '4.png'
+            'Device Model 1': '1.png',
+            'Device Model 2': 'E53.D3E-J缩略图.jpg',
+            'Device Model 3': '3.png',
+            'Device Model 4': '4.png'
         };
 
         function addDevice(deviceModel) {
@@ -366,28 +368,28 @@
             removeBtn.style.right = '0%';
             removeBtn.style.top = '4%';
             removeBtn.style.backgroundImage = "url('-.png')";
-            removeBtn.onclick = function() {
+            removeBtn.onclick = function () {
                 frame2.removeChild(deviceElement);
             };
             imgContainer.appendChild(removeBtn);
 
-            // 添加设备型号标签
+            // Add device model label
             const modelLabel = document.createElement('div');
-            modelLabel.textContent = '产品型号: ' + deviceModel;
+            modelLabel.textContent = 'Product Model: ' + deviceModel;
             modelLabel.style.marginTop = '3%';
             modelLabel.style.textAlign = 'left';
             modelLabel.style.fontSize = '0.8vw';
             modelLabel.style.backgroundColor = '#d3d3d3';
             imgContainer.appendChild(modelLabel);
 
-            // 添加产品编号标签（可编辑）
+            // Add product number label (editable)
             const productNumberLabel = document.createElement('div');
-            productNumberLabel.textContent = '产品编号: ';
+            productNumberLabel.textContent = 'Product Number: ';
             productNumberLabel.style.marginTop = '0%';
             productNumberLabel.style.textAlign = 'left';
             productNumberLabel.style.fontSize = '0.8vw';
             productNumberLabel.style.backgroundColor = '#d3d3d3';
-            
+
             const productNumberInput = document.createElement('input');
             productNumberInput.type = 'text';
             productNumberInput.value = '2024010978';
@@ -396,11 +398,11 @@
             productNumberInput.style.border = '1px solid #d3d3d3';
             productNumberInput.style.fontSize = '0.8vw';
             productNumberInput.style.backgroundColor = '#d3d3d3';
-            
+
             productNumberLabel.appendChild(productNumberInput);
             imgContainer.appendChild(productNumberLabel);
 
-            // 添加设备地址标签和修改按钮
+            // Add device address label and modify button
             const addressContainer = document.createElement('div');
             addressContainer.style.display = 'flex';
             addressContainer.style.justifyContent = 'space-between';
@@ -408,11 +410,11 @@
             addressContainer.style.marginTop = '0%';
             addressContainer.style.backgroundColor = '#ffffff';
             addressContainer.style.padding = '2px';
-            
-        
-            
+
+
+
             const editAddressBtn = document.createElement('button');
-            editAddressBtn.textContent = '修改地址';
+            editAddressBtn.textContent = 'Modify Address';
             editAddressBtn.style.fontSize = '0.6vw';
             editAddressBtn.style.marginTop = '6%';
 
@@ -425,14 +427,14 @@
             editAddressBtn.style.borderRadius = '3px';
             editAddressBtn.style.cursor = 'pointer';
 
-            // 添加地址标签（可编辑）
+            // Add address label (editable)
             const addressLabel = document.createElement('div');
-            addressLabel.textContent = '设备地址: ';
+            addressLabel.textContent = 'Device Address: ';
             addressLabel.style.fontSize = '0.8vw';
             addressLabel.style.marginTop = '6%';
             addressLabel.style.textAlign = 'left';
             addressLabel.style.backgroundColor = '#ffffff';
-            
+
             const addressInput = document.createElement('input');
             addressInput.type = 'text';
             addressInput.value = '8';
@@ -441,13 +443,13 @@
             addressInput.style.border = '0px solid #d3d3d3';
             addressInput.style.fontSize = '0.8vw';
             addressInput.style.backgroundColor = '#ffffff';
-            
+
             addressLabel.appendChild(addressInput);
             addressContainer.appendChild(addressLabel);
             addressContainer.appendChild(editAddressBtn);
             imgContainer.appendChild(addressContainer);
 
-            // 控制容器
+            // Control container
             const controlContainer = document.createElement('div');
             controlContainer.style.flexGrow = '1';
             controlContainer.style.display = 'flex';
@@ -457,19 +459,19 @@
             const modes = [
                 {
                     label: 'RS-232',
-                    inputs: ['COM1', '115200dps', '数据位8位', '停止位1位', '无校验']
+                    inputs: ['COM1', '115200dps', '8 data bits', '1 stop bit', 'No parity']
                 },
                 {
                     label: 'RS-422',
-                    inputs: ['COM2', '115200dps', '数据位8位', '停止位1位', '无校验']
+                    inputs: ['COM2', '115200dps', '8 data bits', '1 stop bit', 'No parity']
                 },
                 {
                     label: 'USB-VCP',
-                    inputs: ['COM3', '115200dps', '数据位8位', '停止位1位', '无校验']
+                    inputs: ['COM3', '115200dps', '8 data bits', '1 stop bit', 'No parity']
                 },
                 {
                     label: 'LAN-UDP',
-                    inputs: ['UDP，本机IP地址：192.168.0.100:7010', 'UDP，目标主机IP地址：192.168.0.101:7010']
+                    inputs: ['UDP, Local IP: 192.168.0.100:7010', 'UDP, Target IP: 192.168.0.101:7010']
                 }
             ];
 
@@ -493,20 +495,20 @@
 
                 const inputField = document.createElement('input');
                 inputField.type = 'text';
-                inputField.value = mode.inputs.join(' '); // 合成一个输入框
-                inputField.style.width = '80%'; // 设置宽度为300px
+                inputField.value = mode.inputs.join(' '); // Combine into one input field
+                inputField.style.width = '80%'; // Set width to 300px
                 inputField.style.padding = '5px';
                 inputField.style.fontSize = '0.7em';
                 inputField.style.border = '1px solid #ccc';
                 modeContainer.appendChild(inputField);
 
-                ['修改', '连接', '断开'].forEach(action => {
+                ['Modify', 'Connect', 'Disconnect'].forEach(action => {
                     const actionButton = document.createElement('button');
                     actionButton.textContent = action;
                     actionButton.style.flexBasis = '10%';
                     actionButton.style.fontSize = '5px';
                     actionButton.style.padding = '5px';
-                    actionButton.style.backgroundColor = action === '断开' ? '#ccc' : '#c80025';
+                    actionButton.style.backgroundColor = action === 'Disconnect' ? '#ccc' : '#c80025';
                     actionButton.style.color = 'white';
                     actionButton.style.border = 'none';
                     // actionButton.style.borderRadius = '5px';
@@ -522,42 +524,42 @@
             frame2.appendChild(deviceElement);
         }
 
-        // 全局变量存储当前语言状态
-        let currentLanguage = 'zh'; // 默认语言为中文
+        // Global variable to store current language state
+        let currentLanguage = 'en'; // Default language is English
 
-        // 切换语言函数
+        // Language toggle function
         function toggleLanguage() {
-            const isChinese = currentLanguage === 'zh';
-            currentLanguage = isChinese ? 'en' : 'zh';
+            const isEnglish = currentLanguage === 'en';
+            currentLanguage = isEnglish ? 'zh' : 'en';
 
-            // 更新页面文本内容
-            document.querySelector('.title').textContent = isChinese ? 'CoreMorrow Nano Motion Control Software' : '芯明天纳米运动控制软件';
-            document.querySelector('.subtitle').textContent = isChinese ? 'COREMORROW NANO MOTION CONTROL SOFTWARE' : '芯明天纳米运动控制软件';
+            // Update page text content
+            document.querySelector('.title').textContent = isEnglish ? '芯明天纳米运动控制软件' : 'CoreMorrow Nano Motion Control Software';
+            document.querySelector('.subtitle').textContent = isEnglish ? '芯明天纳米运动控制软件' : 'COREMORROW NANO MOTION CONTROL SOFTWARE';
 
-            // 更新菜单栏内容
+            // Update menu bar content
             const menuItems = document.querySelectorAll('.menu-item.dropdown');
-            const menuTexts = isChinese
-                ? ['File', 'Info', 'Settings', 'Help']
-                : ['文件', '信息', '设置', '帮助'];
+            const menuTexts = isEnglish
+                ? ['文件', '信息', '设置', '帮助']
+                : ['File', 'Info', 'Settings', 'Help'];
 
             menuItems.forEach((item, index) => {
                 item.childNodes[0].textContent = menuTexts[index];
             });
 
-            // 更新下拉菜单内容
+            // Update dropdown menu content
             const dropdownContents = document.querySelectorAll('.dropdown-content');
-            const dropdownTexts = isChinese
+            const dropdownTexts = isEnglish
                 ? [
-                    ['Import Device', 'New/Edit Device', 'Export Page Records', 'Close File', 'Exit Current Window'],
-                    ['Factory Report Query'],
-                    ['Calibration Parameter Settings', 'Debug Parameter Settings', 'Controller Firmware Upgrade', 'System Language/Language'],
-                    ['User Manual', 'Help Videos', 'Check for Updates', 'Update Content', 'About']
-                ]
-                : [
                     ['导入设备', '新建/编辑设备', '导出页面记录', '文件关闭', '当前窗口退出'],
                     ['出厂报告查询'],
                     ['标定参数设置', '调试参数设置', '控制器固件升级', '系统语言/Language'],
-                    ['用户手册', '帮助视频', '检查更新', '更新内容', '关于']
+                    ['用户手册', '帮助视频', '检查更新', '更新内容', '关于', '修改']
+                ]
+                : [
+                    ['Import Device', 'New/Edit Device', 'Export Page Records', 'Close File', 'Exit Current Window'],
+                    ['Factory Report Query'],
+                    ['Calibration Parameter Settings', 'Debug Parameter Settings', 'Controller Firmware Upgrade', 'System Language/Language'],
+                    ['User Manual', 'Help Videos', 'Check for Updates', 'Update Content', 'About', 'Modify']
                 ];
 
             dropdownContents.forEach((content, index) => {
@@ -570,10 +572,11 @@
 
         // 为“系统语言/Language”菜单项添加点击事件
         document.querySelectorAll('.dropdown-content div').forEach(item => {
-            if (item.textContent.includes('系统语言') || item.textContent.includes('Language')) {
+            if (item.textContent.includes('System Language') || item.textContent.includes('Language')) {
                 item.onclick = toggleLanguage;
             }
         });
     </script>
 </body>
+
 </html>
