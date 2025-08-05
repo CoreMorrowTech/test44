@@ -262,15 +262,15 @@ function generateControlInterface(command, device, connection) {
         <div style="display: flex; align-items: center; margin-bottom: 20px;">
             <img src="3.png" style="width: 80px; height: 60px; margin-right: 20px;">
             <div>
-                <div style="font-weight: bold;">设备: ${device.name}</div>
-                <div style="color: #666;">产品编号: 2024010978</div>
+                <div style="font-weight: bold;">Product Model: ${device.name}</div>
+                <div style="color: #666;">Product Number: 2024010978</div>
             </div>
         </div>
         
         <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
             <thead>
                 <tr style="background-color: #f0f0f0;">
-                    <th style="border: 1px solid #ccc; padding: 10px;">通道</th>
+                    <th style="border: 1px solid #ccc; padding: 10px;">CHANNEL</th>
                     <th style="border: 1px solid #ccc; padding: 10px;">ADDRESS</th>
                     <th style="border: 1px solid #ccc; padding: 10px;">CHANNEL</th>
     `;
@@ -287,14 +287,14 @@ function generateControlInterface(command, device, connection) {
         html += `<th style="border: 1px solid #ccc; padding: 10px;">${ret.name}</th>`;
     });
 
-    html += `<th style="border: 1px solid #ccc; padding: 10px;">操作</th></tr></thead><tbody>`;
+    html += `<th style="border: 1px solid #ccc; padding: 10px;">EXE</th></tr></thead><tbody>`;
 
     // 为每个通道生成一行
     for (let channel = 1; channel <= device.channeltotal; channel++) {
         html += `<tr>`;
         
         // 通道号
-        html += `<td style="border: 1px solid #ccc; padding: 10px; text-align: center; background-color: #e0e0e0;">${channel}通道</td>`;
+        html += `<td style="border: 1px solid #ccc; padding: 10px; text-align: center; background-color: #e0e0e0;">Channel${channel}</td>`;
         
         // ADDRESS（自动填充）
         html += `<td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${connection.deviceAddress}</td>`;
@@ -320,7 +320,7 @@ function generateControlInterface(command, device, connection) {
         
         // 执行按钮
         html += `<td style="border: 1px solid #ccc; padding: 5px; text-align: center;">`;
-        html += `<button onclick="executeCommand('${command.name}', ${channel})" style="background-color: #4CAF50; color: white; border: none; padding: 5px 10px; cursor: pointer;">执行</button>`;
+        html += `<button onclick="executeCommand('${command.name}', ${channel})" style="background-color: #4CAF50; color: white; border: none; padding: 5px 10px; cursor: pointer;">EXE</button>`;
         html += `</td>`;
         
         html += `</tr>`;
