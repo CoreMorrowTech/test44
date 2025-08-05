@@ -111,7 +111,7 @@ function updateConnectionMenu() {
         const disconnectText = currentLanguage === 'zh' ? '断开' : 'Disconnect';
         
         dropdownContent += `
-            <div>${displayInfo}</div>
+            <div onclick="openDeviceControlInterface('${connectionKey}')" style="cursor: pointer;">${displayInfo}</div>
             <div onclick="disconnectSpecificConnection('${connectionKey}')" style="padding-left: 20px; font-size: 0.9em; color: #ccc;">${disconnectText}</div>
         `;
     });

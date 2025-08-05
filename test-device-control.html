@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Control Interface Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+            background-color: #f5f5f5;
+        }
+
+        .menu-bar {
+            position: absolute;
+            top: 5%;
+            left: 2%;
+            width: 50%;
+            height: 50px;
+            background-color: #3e3e3e;
+            display: flex;
+            align-items: center;
+            padding-left: 1%;
+        }
+
+        .menu-item {
+            color: #fff;
+            font-size: 16px;
+            margin-right: 20px;
+            cursor: pointer;
+            padding: 10px 15px;
+            position: relative;
+        }
+
+        .menu-item:hover {
+            background-color: #c80025;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #3e3e3e;
+            min-width: 250px;
+            left: 0;
+            top: 100%;
+            z-index: 1;
+        }
+
+        .dropdown-content div {
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .dropdown-content div:hover {
+            background-color: #c80025;
+        }
+
+        .test-buttons {
+            position: absolute;
+            top: 15%;
+            left: 2%;
+            margin: 20px 0;
+        }
+
+        .test-buttons button {
+            margin: 5px;
+            padding: 10px 15px;
+            background-color: #c80025;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .main-content {
+            position: absolute;
+            top: 25%;
+            left: 2%;
+            width: 96%;
+            height: 70%;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="menu-bar">
+        <div class="menu-item dropdown">
+            File
+            <div class="dropdown-content">
+                <div>Import Device</div>
+                <div>New/Edit Device</div>
+            </div>
+        </div>
+        <div class="menu-item dropdown">
+            Settings
+            <div class="dropdown-content">
+                <div>System Language/Language</div>
+            </div>
+        </div>
+        <div class="menu-item dropdown">
+            Help
+            <div class="dropdown-content">
+                <div>User Manual</div>
+                <div>About</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-buttons">
+        <button onclick="testAddConnection()">Add Test Connection</button>
+        <button onclick="testOpenDeviceControl()">Open Device Control</button>
+        <button onclick="testCloseDeviceControl()">Close Device Control</button>
+    </div>
+
+    <div class="main-content">
+        <h2>Device Control Interface Test</h2>
+        <p>This page is used to test the device control interface functionality.</p>
+        <p>Click "Add Test Connection" to simulate a device connection, then click "Open Device Control" to test the interface.</p>
+    </div>
+
+    <script>
+        // 模拟全局变量
+        let currentLanguage = 'en';
+        let connectionMenu = null;
+        let activeConnections = new Map();
+        let currentDeviceInterface = null;
+        let deviceConfig = null;
+        let commandConfig = null;
+
+        // 模拟配置数据
+        const mockDeviceConfig = {
+            "commands": [
+                {
+                    "name": "Device Model 1",
+                    "channeltotal": 2,
+                    "function": [
+                        {"name": "setxChannelVoltage"},
+                        {"name": "setxChannelRange"}
+                    ]
+                }
+            ]
+        };
+
+        const mockCommandConfig = {
+            "commands": [
+                {
+                    "name": "setxChannelVoltage",
+                    "cmd1": 0,
+                    "cmd2": 0,
+                    "params": [
+                        {"name": "ADDRESS", "type": "int", "position": 1},
+                        {"name": "CHANNEL", "type": "int", "position": 5},
+                        {"name": "VOLTAGE", "type": "float", "positions": [6,7,8,9]}
+                    ],
+                    "returns": [
+                        {"name": "O", "type": "str", "position": 0},
+                        {"name": "K", "type": "str", "position": 1}
+                    ]
+                },
+                {
+                    "name": "setxChannelRange",
+                    "cmd1": 1,
+                    "cmd2": 0,
+                    "params": [
+                        {"name": "ADDRESS", "type": "int", "position": 1},
+                        {"name": "CHANNEL", "type": "int", "position": 5},
+                        {"name": "RANGE", "type": "float", "positions": [6,7,8,9]}
+                    ],
+                    "returns": [
+                        {"name": "O", "type": "str", "position": 0},
+                        {"name": "K", "type": "str", "position": 1}
+                    ]
+                }
+            ]
+        };
+
+        // 初始化下拉菜单
+        document.querySelectorAll('.dropdown').forEach(dropdown => {
+            dropdown.addEventListener('mouseenter', function () {
+                this.querySelector('.dropdown-content').style.display = 'block';
+            });
+            dropdown.addEventListener('mouseleave', function () {
+                this.querySelector('.dropdown-content').style.display = 'none';
+            });
+        });
+
+        // 测试函数
+        function testAddConnection() {
+            const connectionKey = 'device-001-RS-232';
+            activeConnections.set(connectionKey, {
+                deviceId: 'device-001',
+                connectionType: 'RS-232',
+                deviceName: 'Device Model 1',
+                deviceAddress: '8'
+            });
+            
+            // 模拟更新Connection菜单
+            updateConnectionMenu();
+            console.log('Test connection added');
+        }
+
+        function testOpenDeviceControl() {
+            if (activeConnections.size === 0) {
+                alert('Please add a test connection first');
+                return;
+            }
+            
+            const connectionKey = Array.from(activeConnections.keys())[0];
+            openDeviceControlInterface(connectionKey);
+        }
+
+        function testCloseDeviceControl() {
+            closeDeviceControlInterface();
+        }
+
+        // 模拟Connection菜单更新
+        function updateConnectionMenu() {
+            if (activeConnections.size === 0) {
+                removeConnectionMenu();
+                return;
+            }
+
+            if (connectionMenu) {
+                removeConnectionMenu();
+            }
+
+            const menuBar = document.querySelector('.menu-bar');
+            const connectionText = 'Connection';
+            
+            connectionMenu = document.createElement('div');
+            connectionMenu.className = 'menu-item dropdown';
+            
+            let dropdownContent = '<div class="dropdown-content">';
+            
+            activeConnections.forEach((connection, connectionKey) => {
+                const { deviceName, deviceAddress, connectionType } = connection;
+                const displayInfo = `${deviceName}/${deviceAddress}/${connectionType}`;
+                
+                dropdownContent += `
+                    <div onclick="openDeviceControlInterface('${connectionKey}')" style="cursor: pointer;">${displayInfo}</div>
+                    <div onclick="disconnectSpecificConnection('${connectionKey}')" style="padding-left: 20px; font-size: 0.9em; color: #ccc;">Disconnect</div>
+                `;
+            });
+            
+            dropdownContent += '</div>';
+            
+            connectionMenu.innerHTML = `${connectionText}${dropdownContent}`;
+
+            connectionMenu.addEventListener('mouseenter', function () {
+                this.querySelector('.dropdown-content').style.display = 'block';
+            });
+            connectionMenu.addEventListener('mouseleave', function () {
+                this.querySelector('.dropdown-content').style.display = 'none';
+            });
+
+            const firstMenu = menuBar.querySelector('.menu-item.dropdown');
+            menuBar.insertBefore(connectionMenu, firstMenu);
+
+            console.log('Connection menu updated');
+        }
+
+        function removeConnectionMenu() {
+            if (connectionMenu && connectionMenu.parentNode) {
+                connectionMenu.parentNode.removeChild(connectionMenu);
+                connectionMenu = null;
+            }
+        }
+
+        function disconnectSpecificConnection(connectionKey) {
+            activeConnections.delete(connectionKey);
+            updateConnectionMenu();
+            console.log('Connection disconnected:', connectionKey);
+        }
+
+        // 包含设备控制界面的所有函数
+        async function openDeviceControlInterface(connectionKey) {
+            try {
+                const connection = activeConnections.get(connectionKey);
+                if (!connection) {
+                    console.error('连接不存在:', connectionKey);
+                    return;
+                }
+
+                // 使用模拟配置
+                deviceConfig = mockDeviceConfig;
+                commandConfig = mockCommandConfig;
+
+                hideMainInterface();
+                generateDeviceControlInterface(connection);
+
+                console.log(`打开设备控制界面: ${connection.deviceName}`);
+            } catch (error) {
+                console.error('打开设备控制界面失败:', error);
+            }
+        }
+
+        function hideMainInterface() {
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) {
+                mainContent.style.display = 'none';
+            }
+        }
+
+        function showMainInterface() {
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) {
+                mainContent.style.display = 'block';
+            }
+        }
+
+        function generateDeviceControlInterface(connection) {
+            const device = deviceConfig.commands.find(cmd => cmd.name === connection.deviceName);
+            if (!device) {
+                console.error('未找到设备配置:', connection.deviceName);
+                return;
+            }
+
+            const controlInterface = document.createElement('div');
+            controlInterface.id = 'device-control-interface';
+            controlInterface.style.cssText = `
+                position: absolute;
+                top: 15%;
+                left: 2%;
+                width: 96%;
+                height: 80%;
+                background-color: #f0f0f0;
+                border: 1px solid #ccc;
+                overflow: hidden;
+            `;
+
+            const tabContainer = createTabContainer(device, connection);
+            controlInterface.appendChild(tabContainer);
+
+            const contentArea = createContentArea(device, connection);
+            controlInterface.appendChild(contentArea);
+
+            document.body.appendChild(controlInterface);
+            currentDeviceInterface = controlInterface;
+
+            if (device.function.length > 0) {
+                showTabContent(device.function[0].name, device, connection);
+            }
+        }
+
+        function createTabContainer(device, connection) {
+            const tabContainer = document.createElement('div');
+            tabContainer.style.cssText = `
+                width: 100%;
+                height: 50px;
+                background-color: #333;
+                display: flex;
+                align-items: center;
+            `;
+
+            device.function.forEach((func, index) => {
+                const tab = document.createElement('div');
+                tab.className = 'device-tab';
+                tab.textContent = func.name;
+                tab.style.cssText = `
+                    padding: 10px 20px;
+                    background-color: ${index === 0 ? '#c80025' : '#666'};
+                    color: white;
+                    cursor: pointer;
+                    border-right: 1px solid #555;
+                    font-size: 14px;
+                `;
+
+                tab.onclick = () => {
+                    document.querySelectorAll('.device-tab').forEach(t => {
+                        t.style.backgroundColor = '#666';
+                    });
+                    tab.style.backgroundColor = '#c80025';
+                    showTabContent(func.name, device, connection);
+                };
+
+                tabContainer.appendChild(tab);
+            });
+
+            const closeBtn = document.createElement('div');
+            closeBtn.textContent = '×';
+            closeBtn.style.cssText = `
+                margin-left: auto;
+                margin-right: 20px;
+                padding: 5px 15px;
+                background-color: #c80025;
+                color: white;
+                cursor: pointer;
+                font-size: 20px;
+                font-weight: bold;
+            `;
+            closeBtn.onclick = closeDeviceControlInterface;
+            tabContainer.appendChild(closeBtn);
+
+            return tabContainer;
+        }
+
+        function createContentArea(device, connection) {
+            const contentArea = document.createElement('div');
+            contentArea.id = 'device-content-area';
+            contentArea.style.cssText = `
+                width: 100%;
+                height: calc(100% - 50px);
+                background-color: white;
+                overflow-y: auto;
+                padding: 20px;
+                box-sizing: border-box;
+            `;
+
+            return contentArea;
+        }
+
+        function showTabContent(functionName, device, connection) {
+            const contentArea = document.getElementById('device-content-area');
+            if (!contentArea) return;
+
+            const command = commandConfig.commands.find(cmd => cmd.name === functionName);
+            if (!command) {
+                contentArea.innerHTML = `<p>未找到命令配置: ${functionName}</p>`;
+                return;
+            }
+
+            contentArea.innerHTML = generateControlInterface(command, device, connection);
+        }
+
+        function generateControlInterface(command, device, connection) {
+            let html = `
+                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 60px; background-color: #ddd; margin-right: 20px; display: flex; align-items: center; justify-content: center;">设备图片</div>
+                    <div>
+                        <div style="font-weight: bold;">设备: ${device.name}</div>
+                        <div style="color: #666;">产品编号: 2024010978</div>
+                    </div>
+                </div>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="border: 1px solid #ccc; padding: 10px;">通道</th>
+                            <th style="border: 1px solid #ccc; padding: 10px;">ADDRESS</th>
+                            <th style="border: 1px solid #ccc; padding: 10px;">CHANNEL</th>
+            `;
+
+            command.params.forEach(param => {
+                if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL') {
+                    html += `<th style="border: 1px solid #ccc; padding: 10px;">${param.name}</th>`;
+                }
+            });
+
+            command.returns.forEach(ret => {
+                html += `<th style="border: 1px solid #ccc; padding: 10px;">${ret.name}</th>`;
+            });
+
+            html += `<th style="border: 1px solid #ccc; padding: 10px;">操作</th></tr></thead><tbody>`;
+
+            for (let channel = 1; channel <= device.channeltotal; channel++) {
+                html += `<tr>`;
+                html += `<td style="border: 1px solid #ccc; padding: 10px; text-align: center; background-color: #e0e0e0;">${channel}通道</td>`;
+                html += `<td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${connection.deviceAddress}</td>`;
+                html += `<td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${channel}</td>`;
+                
+                command.params.forEach(param => {
+                    if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL') {
+                        html += `<td style="border: 1px solid #ccc; padding: 5px;">`;
+                        html += generateInputField(param, channel, command.name);
+                        html += `</td>`;
+                    }
+                });
+                
+                command.returns.forEach(ret => {
+                    html += `<td style="border: 1px solid #ccc; padding: 5px;">`;
+                    html += generateOutputField(ret, channel, command.name);
+                    html += `</td>`;
+                });
+                
+                html += `<td style="border: 1px solid #ccc; padding: 5px; text-align: center;">`;
+                html += `<button onclick="executeCommand('${command.name}', ${channel})" style="background-color: #4CAF50; color: white; border: none; padding: 5px 10px; cursor: pointer;">执行</button>`;
+                html += `</td>`;
+                html += `</tr>`;
+            }
+
+            html += `</tbody></table>`;
+            return html;
+        }
+
+        function generateInputField(param, channel, commandName) {
+            const fieldId = `${commandName}_${param.name}_${channel}`;
+            
+            if (param.allowvalue && param.allowvalue.length > 0) {
+                let html = `<select id="${fieldId}" style="width: 100%; padding: 5px;">`;
+                param.allowvalue.forEach(value => {
+                    html += `<option value="${value}">${value}</option>`;
+                });
+                html += `</select>`;
+                return html;
+            } else {
+                const placeholder = param.description || param.name;
+                return `<input type="text" id="${fieldId}" placeholder="${placeholder}" style="width: 100%; padding: 5px; border: 1px solid #ccc;">`;
+            }
+        }
+
+        function generateOutputField(ret, channel, commandName) {
+            const fieldId = `${commandName}_${ret.name}_output_${channel}`;
+            return `<input type="text" id="${fieldId}" readonly style="width: 100%; padding: 5px; border: 1px solid #ccc; background-color: #f9f9f9;">`;
+        }
+
+        function executeCommand(commandName, channel) {
+            try {
+                const command = commandConfig.commands.find(cmd => cmd.name === commandName);
+                if (!command) {
+                    console.error('未找到命令配置:', commandName);
+                    return;
+                }
+
+                const params = {};
+                command.params.forEach(param => {
+                    if (param.name === 'ADDRESS') {
+                        const connection = Array.from(activeConnections.values())[0];
+                        params[param.name] = parseInt(connection.deviceAddress);
+                    } else if (param.name === 'CHANNEL') {
+                        params[param.name] = channel;
+                    } else {
+                        const fieldId = `${commandName}_${param.name}_${channel}`;
+                        const field = document.getElementById(fieldId);
+                        if (field) {
+                            let value = field.value;
+                            if (param.type === 'int') {
+                                value = parseInt(value) || 0;
+                            } else if (param.type === 'float') {
+                                value = parseFloat(value) || 0.0;
+                            }
+                            params[param.name] = value;
+                        }
+                    }
+                });
+
+                console.log(`执行命令: ${commandName}`, params);
+                simulateCommandExecution(command, channel, params);
+
+            } catch (error) {
+                console.error('执行命令失败:', error);
+            }
+        }
+
+        function simulateCommandExecution(command, channel, params) {
+            command.returns.forEach(ret => {
+                const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    let mockValue = '';
+                    if (ret.type === 'str') {
+                        mockValue = ret.name === 'O' ? 'O' : 'K';
+                    } else if (ret.type === 'int') {
+                        mockValue = channel.toString();
+                    } else if (ret.type === 'float') {
+                        mockValue = (Math.random() * 100).toFixed(2);
+                    }
+                    field.value = mockValue;
+                }
+            });
+
+            console.log(`命令 ${command.name} 执行完成，通道 ${channel}`);
+        }
+
+        function closeDeviceControlInterface() {
+            if (currentDeviceInterface) {
+                document.body.removeChild(currentDeviceInterface);
+                currentDeviceInterface = null;
+            }
+
+            showMainInterface();
+            console.log('设备控制界面已关闭');
+        }
+    </script>
+</body>
+</html>
