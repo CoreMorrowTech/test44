@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection Menu Test</title>
+    <style>
+        .menu-bar {
+            background-color: #3e3e3e;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            height: 50px;
+        }
+
+        .menu-item {
+            color: #fff;
+            font-size: 16px;
+            margin-right: 20px;
+            cursor: pointer;
+            padding: 10px 15px;
+            position: relative;
+        }
+
+        .menu-item:hover {
+            background-color: #c80025;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #3e3e3e;
+            min-width: 200px;
+            left: 0;
+            top: 100%;
+            z-index: 1;
+        }
+
+        .dropdown-content div {
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .dropdown-content div:hover {
+            background-color: #c80025;
+        }
+
+        .test-buttons {
+            margin: 20px;
+        }
+
+        .test-buttons button {
+            margin: 5px;
+            padding: 10px 15px;
+            background-color: #c80025;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="menu-bar">
+        <div class="menu-item dropdown">
+            File
+            <div class="dropdown-content">
+                <div>Import Device</div>
+                <div>New/Edit Device</div>
+            </div>
+        </div>
+        <div class="menu-item dropdown">
+            Settings
+            <div class="dropdown-content">
+                <div>System Language/Language</div>
+            </div>
+        </div>
+        <div class="menu-item dropdown">
+            Help
+            <div class="dropdown-content">
+                <div>User Manual</div>
+                <div>About</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-buttons">
+        <button onclick="testAddConnection()">Test Add Connection Menu</button>
+        <button onclick="testRemoveConnection()">Test Remove Connection Menu</button>
+        <button onclick="testLanguageToggle()">Test Language Toggle</button>
+    </div>
+
+    <script>
+        // 模拟全局变量
+        let currentLanguage = 'en';
+        let connectionMenu = null;
+
+        // 模拟菜单函数
+        function addConnectionMenu(deviceId, connectionType, connectionInfo, deviceName = '', deviceAddress = '') {
+            if (connectionMenu) {
+                removeConnectionMenu();
+            }
+
+            const menuBar = document.querySelector('.menu-bar');
+            const connectionText = currentLanguage === 'zh' ? '连接' : 'Connection';
+            
+            // 格式化显示信息：设备名称/地址/连接方式
+            const displayInfo = `${deviceName || deviceId}/${deviceAddress || 'N/A'}/${connectionType}`;
+            const disconnectText = currentLanguage === 'zh' ? '断开连接' : 'Disconnect';
+
+            connectionMenu = document.createElement('div');
+            connectionMenu.className = 'menu-item dropdown';
+            connectionMenu.innerHTML = `
+                ${connectionText}
+                <div class="dropdown-content">
+                    <div>${displayInfo}</div>
+                    <div onclick="disconnectCurrentConnection()">${disconnectText}</div>
+                </div>
+            `;
+
+            connectionMenu.addEventListener('mouseenter', function () {
+                this.querySelector('.dropdown-content').style.display = 'block';
+            });
+            connectionMenu.addEventListener('mouseleave', function () {
+                this.querySelector('.dropdown-content').style.display = 'none';
+            });
+
+            // 将Connection菜单插入到File菜单的左边（最前面）
+            const firstMenu = menuBar.querySelector('.menu-item.dropdown');
+            menuBar.insertBefore(connectionMenu, firstMenu);
+
+            console.log(`Connection菜单已添加: ${deviceId} - ${connectionType}`);
+        }
+
+        function removeConnectionMenu() {
+            if (connectionMenu && connectionMenu.parentNode) {
+                connectionMenu.parentNode.removeChild(connectionMenu);
+                connectionMenu = null;
+                console.log('Connection菜单已移除');
+            }
+        }
+
+        function disconnectCurrentConnection() {
+            console.log('断开当前连接');
+            removeConnectionMenu();
+        }
+
+        // 初始化下拉菜单
+        document.querySelectorAll('.dropdown').forEach(dropdown => {
+            dropdown.addEventListener('mouseenter', function () {
+                this.querySelector('.dropdown-content').style.display = 'block';
+            });
+            dropdown.addEventListener('mouseleave', function () {
+                this.querySelector('.dropdown-content').style.display = 'none';
+            });
+        });
+
+        // 测试函数
+        function testAddConnection() {
+            addConnectionMenu('device-001', 'RS-232', 'COM1, 115200bps', 'Device Model 1', '8');
+        }
+
+        function testRemoveConnection() {
+            removeConnectionMenu();
+        }
+
+        function testLanguageToggle() {
+            currentLanguage = currentLanguage === 'en' ? 'zh' : 'en';
+            if (connectionMenu) {
+                const connectionText = currentLanguage === 'zh' ? '连接' : 'Connection';
+                connectionMenu.childNodes[0].textContent = connectionText;
+            }
+            console.log('Language switched to:', currentLanguage);
+        }
+    </script>
+</body>
+
+</html>

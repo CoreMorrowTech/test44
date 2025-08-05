@@ -2,6 +2,9 @@
  * 菜单和语言切换功能
  */
 
+// 存储连接菜单的引用
+let connectionMenu = null;
+
 /**
  * 初始化下拉菜单
  */
@@ -67,4 +70,78 @@ function toggleLanguage() {
             item.textContent = dropdownTexts[index][subIndex];
         });
     });
+
+    // 更新Connection菜单的语言
+    if (connectionMenu) {
+        const connectionText = isEnglish ? '连接' : 'Connection';
+        connectionMenu.childNodes[0].textContent = connectionText;
+    }
+}
+
+/**
+ * 添加Connection菜单到菜单栏
+ * @param {string} deviceId - 设备ID
+ * @param {string} connectionType - 连接类型
+ * @param {string} connectionInfo - 连接信息
+ * @param {string} deviceName - 设备名称
+ * @param {string} deviceAddress - 设备地址
+ */
+function addConnectionMenu(deviceId, connectionType, connectionInfo, deviceName = '', deviceAddress = '') {
+    // 如果Connection菜单已存在，先移除
+    if (connectionMenu) {
+        removeConnectionMenu();
+    }
+
+    const menuBar = document.querySelector('.menu-bar');
+    const connectionText = currentLanguage === 'zh' ? '连接' : 'Connection';
+    
+    // 格式化显示信息：设备名称/地址/连接方式
+    const displayInfo = `${deviceName || deviceId}/${deviceAddress || 'N/A'}/${connectionType}`;
+    const disconnectText = currentLanguage === 'zh' ? '断开连接' : 'Disconnect';
+    
+    // 创建Connection菜单项
+    connectionMenu = document.createElement('div');
+    connectionMenu.className = 'menu-item dropdown';
+    connectionMenu.innerHTML = `
+        ${connectionText}
+        <div class="dropdown-content">
+            <div>${displayInfo}</div>
+            <div onclick="disconnectCurrentConnection()">${disconnectText}</div>
+        </div>
+    `;
+
+    // 添加鼠标悬停事件
+    connectionMenu.addEventListener('mouseenter', function () {
+        this.querySelector('.dropdown-content').style.display = 'block';
+    });
+    connectionMenu.addEventListener('mouseleave', function () {
+        this.querySelector('.dropdown-content').style.display = 'none';
+    });
+
+    // 将Connection菜单插入到File菜单的左边（最前面）
+    const firstMenu = menuBar.querySelector('.menu-item.dropdown');
+    menuBar.insertBefore(connectionMenu, firstMenu);
+
+    console.log(`Connection菜单已添加: ${displayInfo}`);
+}
+
+/**
+ * 从菜单栏移除Connection菜单
+ */
+function removeConnectionMenu() {
+    if (connectionMenu && connectionMenu.parentNode) {
+        connectionMenu.parentNode.removeChild(connectionMenu);
+        connectionMenu = null;
+        console.log('Connection菜单已移除');
+    }
+}
+
+/**
+ * 断开当前连接（从Connection菜单调用）
+ */
+function disconnectCurrentConnection() {
+    // 这个函数将在connection-manager.js中实现
+    if (typeof disconnectCurrentActiveConnection === 'function') {
+        disconnectCurrentActiveConnection();
+    }
 }

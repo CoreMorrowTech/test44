@@ -2,6 +2,9 @@
  * 连接管理功能
  */
 
+// 存储当前活跃连接的信息
+let currentActiveConnection = null;
+
 /**
  * 连接设备函数
  * @param {string} deviceId - 设备ID
@@ -57,6 +60,15 @@ function connectDevice(deviceId, connectionType, connectionInfo, button) {
         // 存储连接实例
         connectionInstances.set(connectionKey, connection);
 
+        // 存储当前活跃连接信息
+        currentActiveConnection = {
+            deviceId: deviceId,
+            connectionType: connectionType,
+            connectionInfo: connectionInfo,
+            connectionKey: connectionKey,
+            button: button
+        };
+
         // 更新按钮状态
         button.style.backgroundColor = '#28a745'; // 绿色表示已连接
         button.textContent = 'Connected';
@@ -66,6 +78,50 @@ function connectDevice(deviceId, connectionType, connectionInfo, button) {
         if (disconnectBtn) {
             disconnectBtn.style.backgroundColor = '#c80025';
             disconnectBtn.style.cursor = 'pointer';
+        }
+
+        // 获取设备名称和地址信息
+        const deviceElement = document.getElementById(deviceId);
+        let deviceName = 'Device Model 1'; // 默认设备名称
+        let deviceAddress = '8'; // 默认地址
+        
+        if (deviceElement) {
+            try {
+                // 方法1: 查找设备型号信息 - 查找只包含"Product Model: xxx"的div
+                const modelDivs = deviceElement.querySelectorAll('div');
+                for (let div of modelDivs) {
+                    const text = div.textContent?.trim() || '';
+                    // 精确匹配只包含Product Model信息的div
+                    const modelMatch = text.match(/^Product Model:\s*(.+)$/);
+                    if (modelMatch && !text.includes('Product Number') && !text.includes('Device Address')) {
+                        deviceName = modelMatch[1].trim();
+                        break;
+                    }
+                }
+                
+                // 方法2: 查找设备地址 - 查找Device Address对应的input
+                const addressInputs = deviceElement.querySelectorAll('input');
+                for (let input of addressInputs) {
+                    const parentText = input.parentElement?.textContent || '';
+                    if (parentText.includes('Device Address:') && input.value) {
+                        deviceAddress = input.value.trim();
+                        break;
+                    }
+                }
+                
+                console.log(`提取的设备信息: 名称="${deviceName}", 地址="${deviceAddress}"`);
+                
+            } catch (error) {
+                console.warn('提取设备信息时出错，使用默认值:', error);
+                // 使用默认值
+                deviceName = 'Device Model 1';
+                deviceAddress = '8';
+            }
+        }
+
+        // 添加Connection菜单到菜单栏
+        if (typeof addConnectionMenu === 'function') {
+            addConnectionMenu(deviceId, connectionType, connectionInfo, deviceName, deviceAddress);
         }
 
         console.log(`设备 ${deviceId} 通过 ${connectionType} 连接成功`);
@@ -107,8 +163,34 @@ function disconnectDevice(deviceId, connectionType, button) {
             connectBtn.textContent = 'Connect';
         }
 
+        // 如果断开的是当前活跃连接，清除活跃连接信息并移除Connection菜单
+        if (currentActiveConnection && currentActiveConnection.connectionKey === connectionKey) {
+            currentActiveConnection = null;
+            if (typeof removeConnectionMenu === 'function') {
+                removeConnectionMenu();
+            }
+        }
+
     } catch (error) {
         console.error(`断开连接失败: ${error.message}`);
+    }
+}
+
+/**
+ * 断开当前活跃连接（从Connection菜单调用）
+ */
+function disconnectCurrentActiveConnection() {
+    if (currentActiveConnection) {
+        const { deviceId, connectionType, button } = currentActiveConnection;
+        
+        // 找到对应的断开按钮
+        const disconnectBtn = button.parentElement.querySelector('button:last-child');
+        if (disconnectBtn) {
+            disconnectDevice(deviceId, connectionType, disconnectBtn);
+        } else {
+            // 如果找不到断开按钮，直接调用断开逻辑
+            disconnectDevice(deviceId, connectionType, button);
+        }
     }
 }
 
