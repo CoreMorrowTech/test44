@@ -2,7 +2,7 @@
   "commands": [
     {
       "name": "Device Model 1",
-      "channeltotal": 2,
+      "channeltotal": 4,
       "function": [
         {
           "name": "setxChannelVoltage"

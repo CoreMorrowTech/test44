@@ -8,7 +8,7 @@
         {"name": "ADDRESS", "type": "int", "position": 1, "allowvalue": [1,2,3,4,5], "max": 10, "min": 0, "description": "地址", "values": [1,2,3,4,5]},
         {"name": "CHANNEL", "type": "int", "position": 5, "allowvalue": [1,2,3,4,5], "max": 10, "min": 0, "description": "通道", "values": [1,2,3,4,5]},
         {"name": "VOLTAGE", "type": "float", "positions": [6,7,8,9], "allowvalue": [], "max": 100.0, "min": 0.0, "description": "电压", "values": [0.0, 100.0]},
-        {"name": "O", "type": "str", "position": 10, "allowvalue": ["O","C"], "max": 100, "min": 0, "description": "开O闭C环", "values": ["O","C"]},
+        {"name": "OPENCLOSE", "type": "str", "position": 10, "allowvalue": ["O","C"], "max": 100, "min": 0, "description": "开O闭C环", "values": ["O","C"]},
         {"name": "255", "type": "int", "position": 11, "allowvalue": [], "max": 1000, "min": 0, "description": "ff", "values": [0,1000]}
       ],
       "returns": [

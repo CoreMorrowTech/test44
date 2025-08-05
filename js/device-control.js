@@ -325,7 +325,7 @@ function generateControlInterface(command, device, connection) {
 
         // 执行按钮
         html += `<td style="padding: 8px; text-align: center;">`;
-        html += `<button onclick="executeCommand('${command.name}', ${channel})" style="background-color: #28a745; color: white; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#218838'" onmouseout="this.style.backgroundColor='#28a745'">EXE</button>`;
+        html += `<button onclick="executeCommand('${command.name}', ${channel})" style="background-color: #6c9bd1; color: white; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#218838'" onmouseout="this.style.backgroundColor='#28a745'">EXE</button>`;
         html += `</td>`;
 
         html += `</tr>`;
