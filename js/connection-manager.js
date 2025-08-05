@@ -111,7 +111,7 @@ function connectDevice(deviceId, connectionType, connectionInfo, button) {
         });
 
         // 更新按钮状态
-        button.style.backgroundColor = '#28a745'; // 绿色表示已连接
+        button.style.backgroundColor = '#d3d3d3'; // 灰色表示已连接
         button.textContent = 'Connected';
 
         // 更新同行的断开按钮状态
