@@ -463,7 +463,18 @@ function handleCommandResult(command, channel, result, params) {
     console.log(`命令 ${command.name} 执行成功:`, result);
 
     // 将结果显示到输出框
-    if (result.data && Array.isArray(result.data)) {
+    // 首先检查result是否直接包含返回值（如 {"K":"K","O":"C"}）
+    if (result && typeof result === 'object' && !result.error && !result.data) {
+        // 直接从result对象中按名称映射返回值
+        command.returns.forEach(ret => {
+            const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+            const field = document.getElementById(fieldId);
+            if (field && result[ret.name] !== undefined) {
+                field.value = result[ret.name];
+                console.log(`设置输出字段 ${ret.name}: ${result[ret.name]}`);
+            }
+        });
+    } else if (result.data && Array.isArray(result.data)) {
         // 如果返回的是数组数据，按位置映射到返回值字段
         command.returns.forEach((ret, index) => {
             const fieldId = `${command.name}_${ret.name}_output_${channel}`;
