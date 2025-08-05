@@ -309,7 +309,12 @@
     <script src="js/connection-manager.js"></script>
     <script src="js/device-manager.js"></script>
     
-    
+    <script>
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {   
+        initializeDropdownMenus();         
+        });
+    </script>
 </body>
 
 </html>
