@@ -359,7 +359,7 @@ function generateInputField(param, channel, commandName) {
     } else {
         // 文本输入框
         const placeholder = param.description || param.name;
-        return `<input type="text" id="${fieldId}" placeholder="${placeholder}" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; transition: border-color 0.2s;" onfocus="this.style.borderColor='#6c9bd1'; this.style.boxShadow='0 0 0 2px rgba(108,155,209,0.25)'" onblur="this.style.borderColor='#ced4da'; this.style.boxShadow='none'">`;
+        return `<input type="text" id="${fieldId}" placeholder="${placeholder}" style="width: 100%; padding: 8px; border: none; border-bottom: 2px solid #6c9bd1; border-radius: 0; font-size: 14px; background: transparent; outline: none; transition: border-bottom-color 0.2s;" onfocus="this.style.borderBottomColor='#4a90e2'; this.style.boxShadow='0 2px 0 0 rgba(74,144,226,0.3)'" onblur="this.style.borderBottomColor='#6c9bd1'; this.style.boxShadow='none'">`;
     }
 }
 
