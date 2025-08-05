@@ -1,0 +1,21 @@
+{
+  "commands": [
+    {
+      "name": "Device Model 1",
+      "channeltotal": 2,
+      "function": [
+        {"name": "setxChannelVoltage"},
+        {"name": "setxChannelRange"}
+
+      ]
+    },
+    {
+      "name": "Device Model 2",
+      "channeltotal": 3,
+      "function": [
+        {"name": "setxChannelVoltage"},
+        {"name": "setxChannelRange"}
+      ]
+    }
+  ]
+}
