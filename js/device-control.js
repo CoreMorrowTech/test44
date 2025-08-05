@@ -263,7 +263,7 @@ function generateControlInterface(command, device, connection) {
             <!-- 左侧设备信息区域 -->
             <div style="flex-shrink: 0; width: 200px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
                 <div style="width: 100%; height: 120px; margin-bottom: 15px; border: 1px solid #ccc; background-color: white; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
-                    <img src="3.png" style="max-width: 90%; max-height: 90%;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <img src="${deviceImageMap[device.name] || '3.png'}" style="max-width: 90%; max-height: 90%;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                     <div style="display: none; font-size: 12px; color: #666;">设备图片</div>
                 </div>
                 <div style="text-align: center;">
