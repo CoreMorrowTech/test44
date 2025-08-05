@@ -261,15 +261,12 @@ function generateControlInterface(command, device, connection) {
     let html = `
         <div style="display: flex; align-items: flex-start; gap: 20px;">
             <!-- 左侧设备信息区域 -->
-            <div style="flex-shrink: 0; width: 200px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
-                <div style="width: 100%; height: 120px; margin-bottom: 15px; border: 1px solid #ccc; background-color: white; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
-                    <img src="${deviceImageMap[device.name] || '3.png'}" style="max-width: 90%; max-height: 90%;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <div style="display: none; font-size: 12px; color: #666;">设备图片</div>
-                </div>
-                <div style="text-align: center;">
-                    <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">Product Model: ${device.name}</div>
-                    <div style="background-color: #6c9bd1; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; display: inline-block;">Product Number: 2024010978</div>
-                </div>
+            <div style="position: relative; width: 200px; height: 300px; margin-right: 10px;">
+                <div style="background-image: url('${deviceImageMap[device.name] || '3.png'}'); width: 100%; height: 150px; background-size: contain; background-color: #d3d3d3; background-position: center center; background-repeat: no-repeat; margin: 0px auto; border: 1px solid #ccc;"></div>
+                <button style="position: absolute; right: 0%; top: 4%; background-image: url('-.png'); width: 18.86%; height: 2.17vh; background-size: contain; background-position: center; background-repeat: no-repeat; background-color: #efefef; border: 0px solid #000; cursor: pointer;" onclick="closeDeviceControlInterface()"></button>
+                <div style="margin-top: 3%; text-align: left; font-size: 0.8vw; background-color: #d3d3d3;">Product Model: ${device.name}</div>
+                <div style="margin-top: 0%; text-align: left; font-size: 0.8vw; background-color: #d3d3d3;">Product Number: <input type="text" value="2024010978" style="width: 50%; text-align: left; border: 1px solid #d3d3d3; font-size: 0.8vw; background-color: #d3d3d3;"></div>
+
             </div>
             
             <!-- 右侧控制表格区域 -->
