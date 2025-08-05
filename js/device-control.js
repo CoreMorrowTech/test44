@@ -271,27 +271,27 @@ function generateControlInterface(command, device, connection) {
             
             <!-- 右侧控制表格区域 -->
             <div style="flex: 1;">
-                <table style="width: 100%; border-collapse: collapse; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <table style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr>
-                            <th style="background-color: #e9ecef; border: 1px solid #dee2e6; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>
-                            <th style="background-color: #6c9bd1; color: white; border: 1px solid #5a8bc4; padding: 12px; font-weight: bold; text-align: center;">ADDRESS</th>
-                            <th style="background-color: #6c9bd1; color: white; border: 1px solid #5a8bc4; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>
+                            <th style="background-color: #e9ecef; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>
+                            <th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">ADDRESS</th>
+                            <th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>
     `;
 
     // 添加参数列标题（除了ADDRESS和CHANNEL）
     command.params.forEach(param => {
         if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL') {
-            html += `<th style="background-color: #6c9bd1; color: white; border: 1px solid #5a8bc4; padding: 12px; font-weight: bold; text-align: center;">${param.name}</th>`;
+            html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${param.name}</th>`;
         }
     });
 
     // 添加返回值列标题
     command.returns.forEach(ret => {
-        html += `<th style="background-color: #6c9bd1; color: white; border: 1px solid #5a8bc4; padding: 12px; font-weight: bold; text-align: center;">${ret.name}</th>`;
+        html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${ret.name}</th>`;
     });
 
-    html += `<th style="background-color: #6c9bd1; color: white; border: 1px solid #5a8bc4; padding: 12px; font-weight: bold; text-align: center;">EXE</th></tr></thead><tbody>`;
+    html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">EXE</th></tr></thead><tbody>`;
 
     // 为每个通道生成一行
     for (let channel = 1; channel <= device.channeltotal; channel++) {
@@ -299,18 +299,18 @@ function generateControlInterface(command, device, connection) {
         html += `<tr style="background-color: ${rowBgColor};">`;
 
         // 通道号
-        html += `<td style="border: 1px solid #dee2e6; padding: 12px; text-align: center; background-color: #6c9bd1; color: white; font-weight: bold;">Channel${channel}</td>`;
+        html += `<td style="padding: 12px; text-align: center; background-color: #6c9bd1; color: white; font-weight: bold;">Channel${channel}</td>`;
 
         // ADDRESS（自动填充）
-        html += `<td style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: bold;">${connection.deviceAddress}</td>`;
+        html += `<td style="padding: 12px; text-align: center; font-weight: bold;">${connection.deviceAddress}</td>`;
 
         // CHANNEL（自动填充）
-        html += `<td style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: bold;">${channel}</td>`;
+        html += `<td style="padding: 12px; text-align: center; font-weight: bold;">${channel}</td>`;
 
         // 其他参数输入框
         command.params.forEach(param => {
             if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL') {
-                html += `<td style="border: 1px solid #dee2e6; padding: 8px;">`;
+                html += `<td style="padding: 8px;">`;
                 html += generateInputField(param, channel, command.name);
                 html += `</td>`;
             }
@@ -318,13 +318,13 @@ function generateControlInterface(command, device, connection) {
 
         // 返回值显示框
         command.returns.forEach(ret => {
-            html += `<td style="border: 1px solid #dee2e6; padding: 8px;">`;
+            html += `<td style="padding: 8px;">`;
             html += generateOutputField(ret, channel, command.name);
             html += `</td>`;
         });
 
         // 执行按钮
-        html += `<td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">`;
+        html += `<td style="padding: 8px; text-align: center;">`;
         html += `<button onclick="executeCommand('${command.name}', ${channel})" style="background-color: #28a745; color: white; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#218838'" onmouseout="this.style.backgroundColor='#28a745'">EXE</button>`;
         html += `</td>`;
 
