@@ -14,7 +14,7 @@ let currentLanguage = 'en'; // Default language is English
 // 设备模型到图片的映射
 const deviceImageMap = {
     'Device Model 1': '1.png',
-    'Device Model 2': 'E53.D3E-J缩略图.jpg',
+    'Device Model 2': 'E53.D3E-J缩略图_副本.png',
     'Device Model 3': '3.png',
     'Device Model 4': '4.png'
 };

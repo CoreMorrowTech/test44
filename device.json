@@ -10,6 +10,22 @@
         {
           "name": "setxChannelRange"
         }
+        ,
+        {
+          "name": "SingleChannelVoltage"
+        }
+        ,
+        {
+          "name": "ReadSingleChannelVoltage"
+        }
+        ,
+        {
+          "name": "getAddress"
+        }
+        ,
+        {
+          "name": "setStepArrayData"
+        }
       ]
     },
     {

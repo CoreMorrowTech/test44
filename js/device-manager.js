@@ -49,9 +49,10 @@ function createImageContainer(deviceModel, deviceElement, frame2) {
     const deviceImg = document.createElement('div');
     deviceImg.className = 'device-img';
     deviceImg.style.backgroundImage = `url('${deviceImageMap[deviceModel] || '3.png'}')`;
-    deviceImg.style.width = '60%';
+    deviceImg.style.width = '100%';
     deviceImg.style.height = '50%';
     deviceImg.style.backgroundSize = 'contain';
+    deviceImg.style.backgroundColor = '#d3d3d3';
     deviceImg.style.backgroundPosition = 'center center';
     deviceImg.style.backgroundRepeat = 'no-repeat';
     deviceImg.style.margin = '0 auto';
