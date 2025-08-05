@@ -259,23 +259,27 @@ function showTabContent(functionName, device, connection) {
  */
 function generateControlInterface(command, device, connection) {
     let html = `
-        <div style="display: flex; align-items: center; margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
-            <div style="width: 80px; height: 60px; margin-right: 20px; border: 1px solid #ccc; background-color: white; display: flex; align-items: center; justify-content: center;">
-                <img src="3.png" style="max-width: 70px; max-height: 50px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                <div style="display: none; font-size: 12px; color: #666;">设备图片</div>
+        <div style="display: flex; align-items: flex-start; gap: 20px;">
+            <!-- 左侧设备信息区域 -->
+            <div style="flex-shrink: 0; width: 200px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                <div style="width: 100%; height: 120px; margin-bottom: 15px; border: 1px solid #ccc; background-color: white; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
+                    <img src="3.png" style="max-width: 90%; max-height: 90%;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div style="display: none; font-size: 12px; color: #666;">设备图片</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">Product Model: ${device.name}</div>
+                    <div style="background-color: #6c9bd1; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; display: inline-block;">Product Number: 2024010978</div>
+                </div>
             </div>
-            <div>
-                <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">Product Model: ${device.name}</div>
-                <div style="background-color: #6c9bd1; color: white; padding: 2px 8px; border-radius: 4px; font-size: 14px; display: inline-block;">Product Number: 2024010978</div>
-            </div>
-        </div>
-        
-        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <thead>
-                <tr>
-                    <th style="background-color: #e9ecef; border: 1px solid #dee2e6; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>
-                    <th style="background-color: #6c9bd1; color: white; border: 1px solid #5a8bc4; padding: 12px; font-weight: bold; text-align: center;">ADDRESS</th>
-                    <th style="background-color: #6c9bd1; color: white; border: 1px solid #5a8bc4; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>
+            
+            <!-- 右侧控制表格区域 -->
+            <div style="flex: 1;">
+                <table style="width: 100%; border-collapse: collapse; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <thead>
+                        <tr>
+                            <th style="background-color: #e9ecef; border: 1px solid #dee2e6; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>
+                            <th style="background-color: #6c9bd1; color: white; border: 1px solid #5a8bc4; padding: 12px; font-weight: bold; text-align: center;">ADDRESS</th>
+                            <th style="background-color: #6c9bd1; color: white; border: 1px solid #5a8bc4; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>
     `;
 
     // 添加参数列标题（除了ADDRESS和CHANNEL）
@@ -330,7 +334,9 @@ function generateControlInterface(command, device, connection) {
         html += `</tr>`;
     }
 
-    html += `</tbody></table>`;
+    html += `</tbody></table>
+            </div>
+        </div>`;
 
     return html;
 }
