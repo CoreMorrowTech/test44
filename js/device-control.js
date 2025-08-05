@@ -262,10 +262,10 @@ function generateControlInterface(command, device, connection) {
         <div style="display: flex; align-items: flex-start; gap: 20px;">
             <!-- 左侧设备信息区域 -->
             <div style="position: relative; width: 200px; height: 300px; margin-right: 10px;">
-                <div style="background-image: url('${deviceImageMap[device.name] || '3.png'}'); width: 100%; height: 150px; background-size: contain; background-color: #d3d3d3; background-position: center center; background-repeat: no-repeat; margin: 0px auto; border: 1px solid #ccc;"></div>
+                <div style="background-image: url('${deviceImageMap[device.name] || '3.png'}'); width: 100%; height: 150px; background-size: contain; background-color: #efefef; background-position: center center; background-repeat: no-repeat; margin: 0px auto; border: 1px solid #ccc;"></div>
                 <button style="position: absolute; right: 0%; top: 4%; background-image: url('-.png'); width: 18.86%; height: 2.17vh; background-size: contain; background-position: center; background-repeat: no-repeat; background-color: #efefef; border: 0px solid #000; cursor: pointer;" onclick="closeDeviceControlInterface()"></button>
-                <div style="margin-top: 3%; text-align: left; font-size: 0.8vw; background-color: #d3d3d3;">Product Model: ${device.name}</div>
-                <div style="margin-top: 0%; text-align: left; font-size: 0.8vw; background-color: #d3d3d3;">Product Number: <input type="text" value="2024010978" style="width: 50%; text-align: left; border: 1px solid #d3d3d3; font-size: 0.8vw; background-color: #d3d3d3;"></div>
+                <div style="margin-top: 3%; text-align: left; font-size: 0.8vw; background-color: #efefef;">Product Model: ${device.name}</div>
+                <div style="margin-top: 0%; text-align: left; font-size: 0.8vw; background-color: #efefef;">Product Number: <input type="text" value="2024010978" style="width: 50%; text-align: left; border: 1px solid #efefef; font-size: 0.8vw; background-color: #efefef;"></div>
 
             </div>
             
