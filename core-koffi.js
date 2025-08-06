@@ -9,13 +9,30 @@ const fs = require('fs');
 
 // 获取 DLL 路径的辅助函数
 function getDllPath() {
+    let app = null;
+    try {
+        app = require('electron').app;
+    } catch (error) {
+        // 在渲染进程或开发环境中可能无法访问 app
+        console.log('无法访问 electron.app，使用备用路径检测');
+    }
+    
+    // 获取应用程序的安装路径
+    const appPath = app ? app.getAppPath() : __dirname;
+    const resourcesPath = app ? process.resourcesPath : path.dirname(__dirname);
+    
     const possiblePaths = [
-        path.join(__dirname, '3App.dll'),  // 当前目录
+        // 开发环境路径
+        path.join(__dirname, '3App.dll'),
         path.join(__dirname, '../3App.dll'),
-        path.join(__dirname, '../DLL/3App.dll'),
-        path.join(__dirname, '../x64/Release/app.dll'),
-        path.join(__dirname, '../x64/Debug/app.dll'),
-        'E:\\C++\\NewDll\\DLL\\x64\\Debug\\3App.dll'
+        
+        // 打包后的路径 - extraFiles 会将 DLL 复制到应用根目录
+        path.join(path.dirname(resourcesPath), '3App.dll'),
+        path.join(resourcesPath, '3App.dll'),
+        
+        // 备用路径
+        path.join(path.dirname(appPath), '3App.dll'),
+        path.join(process.cwd(), '3App.dll'),
     ];
 
     for (const dllPath of possiblePaths) {
@@ -30,10 +47,30 @@ function getDllPath() {
 
 // 获取配置文件路径的辅助函数
 function getConfigPath() {
+    let app = null;
+    try {
+        app = require('electron').app;
+    } catch (error) {
+        // 在渲染进程或开发环境中可能无法访问 app
+        console.log('无法访问 electron.app，使用备用路径检测');
+    }
+    
+    // 获取应用程序的安装路径
+    const appPath = app ? app.getAppPath() : __dirname;
+    const resourcesPath = app ? process.resourcesPath : path.dirname(__dirname);
+    
     const possiblePaths = [
-        path.join(__dirname, '../config.json'),
+        // 开发环境路径
         path.join(__dirname, 'config.json'),
-        'E:\\C++\\NewDll\\DLL\\x64\\Debug\\config.json'
+        path.join(__dirname, '../config.json'),
+        
+        // 打包后的路径 - extraFiles 会将配置文件复制到应用根目录
+        path.join(path.dirname(resourcesPath), 'config.json'),
+        path.join(resourcesPath, 'config.json'),
+        
+        // 备用路径
+        path.join(path.dirname(appPath), 'config.json'),
+        path.join(process.cwd(), 'config.json'),
     ];
 
     for (const configPath of possiblePaths) {

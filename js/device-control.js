@@ -41,13 +41,60 @@ async function openDeviceControlInterface(connectionKey) {
  */
 async function loadDeviceConfigs() {
     try {
+        const fs = require('fs');
+        const path = require('path');
+        
+        // 获取配置文件路径
+        function getConfigFilePath(filename) {
+            let app = null;
+            try {
+                app = require('electron').app;
+            } catch (error) {
+                console.log('无法访问 electron.app，使用备用路径检测');
+            }
+            
+            const appPath = app ? app.getAppPath() : __dirname;
+            const resourcesPath = app ? process.resourcesPath : path.dirname(__dirname);
+            
+            const possiblePaths = [
+                // 开发环境路径
+                path.join(__dirname, '..', filename),
+                path.join(__dirname, filename),
+                
+                // 打包后的路径 - extraFiles 会将文件复制到应用根目录
+                path.join(path.dirname(resourcesPath), filename),
+                path.join(resourcesPath, filename),
+                
+                // 备用路径
+                path.join(path.dirname(appPath), filename),
+                path.join(process.cwd(), filename),
+            ];
+
+            for (const filePath of possiblePaths) {
+                if (fs.existsSync(filePath)) {
+                    console.log(`找到配置文件: ${filePath}`);
+                    return filePath;
+                }
+            }
+            console.log(`未找到配置文件 ${filename}，检查的路径:`, possiblePaths);
+            return null;
+        }
+        
         // 加载device.json
-        const deviceResponse = await fetch('device.json');
-        deviceConfig = await deviceResponse.json();
+        const devicePath = getConfigFilePath('device.json');
+        if (!devicePath) {
+            throw new Error('未找到 device.json 文件');
+        }
+        const deviceData = fs.readFileSync(devicePath, 'utf8');
+        deviceConfig = JSON.parse(deviceData);
 
         // 加载config.json
-        const configResponse = await fetch('config.json');
-        commandConfig = await configResponse.json();
+        const configPath = getConfigFilePath('config.json');
+        if (!configPath) {
+            throw new Error('未找到 config.json 文件');
+        }
+        const configData = fs.readFileSync(configPath, 'utf8');
+        commandConfig = JSON.parse(configData);
 
         console.log('配置文件加载成功');
     } catch (error) {

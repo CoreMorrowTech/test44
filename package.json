@@ -38,7 +38,21 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "我的Electron应用"
-    }
+    },
+    "extraFiles": [
+      {
+        "from": "3App.dll",
+        "to": "3App.dll"
+      },
+      {
+        "from": "device.json", 
+        "to": "device.json"
+      },
+      {
+        "from": "config.json",
+        "to": "config.json"
+      }
+    ]
   },
   "devDependencies": {
     "electron": "^37.2.5",
