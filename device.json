@@ -5,16 +5,20 @@
       "channeltotal": 4,
       "function": [
         {
-          "name": "setxChannelRange"
+          "name": "setxChannelRange",
+          "displayName": "设置范围"
         },
         {
-          "name": "getxChannelRange"
+          "name": "getxChannelRange",
+          "displayName": "读取范围"
         },
         {
-          "name": "setxChannelServoStatus"
+          "name": "setxChannelServoStatus",
+          "displayName": "设置伺服"
         },
         {
-          "name": "TabB_Combined"
+          "name": "TabB_Combined",
+          "displayName": "选项卡B"
         }
       ]
     }
@@ -31,10 +35,14 @@
         },
         {
           "name": "getxChannelRange",
-          "displayName": "读取",
+          "displayName": "命令6",
           "order": 2
+        },
+        {
+          "name": "setxChannelServoStatus",
+          "displayName": "命令7",
+          "order": 3
         }
-        
       ],
       "layout": "combined_table",
       "mergeInputOutput": true,

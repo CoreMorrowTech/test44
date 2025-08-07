@@ -212,7 +212,7 @@ function createTabContainer(device, connection) {
     device.function.forEach((func, index) => {
         const tab = document.createElement('div');
         tab.className = 'device-tab';
-        tab.textContent = func.name;
+        tab.textContent = func.displayName || func.name;
         tab.style.cssText = `
             padding: 10px 20px;
             background-color: ${index === 0 ? '#c80025' : '#666'};
@@ -316,6 +316,10 @@ function generateControlInterface(command, device, connection) {
     // 获取当前命令的隐藏列配置
     const hiddenColumns = command.hiddenColumns || [];
     
+    // 从device.json的function配置中获取displayName
+    const functionConfig = device.function.find(func => func.name === command.name);
+    const buttonDisplayName = functionConfig?.displayName || 'EXE';
+    
     let html = `
         <div style="display: flex; align-items: flex-start; gap: 20px;">
             <!-- 左侧设备信息区域 -->
@@ -400,7 +404,7 @@ function generateControlInterface(command, device, connection) {
 
         // 执行按钮
         html += `<td style="padding: 8px; text-align: center;">`;
-        html += `<button onclick="executeCommand('${command.name}', ${channel})" style="background-color: #6c9bd1; color: white; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#218838'" onmouseout="this.style.backgroundColor='#28a745'">EXE</button>`;
+        html += `<button onclick="executeCommand('${command.name}', ${channel})" style="background-color: #6c9bd1; color: white; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#218838'" onmouseout="this.style.backgroundColor='#28a745'">${buttonDisplayName}</button>`;
         html += `</td>`;
 
         html += `</tr>`;
