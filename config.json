@@ -248,6 +248,8 @@
       "name": "setxChannelVoltage",
       "cmd1": 0,
       "cmd2": 0,
+      "timeout": 1000,
+      "sendOnly": true,
       "params": [
         {
           "name": "ADDRESS",
@@ -267,7 +269,8 @@
             7,
             8,
             9
-          ]
+          ],
+        "description": "设电压"
         }
       ],
       "returns": [
@@ -307,7 +310,7 @@
             8,
             9
           ],
-          "description": "设置位移"
+          "description": "设位移"
         }
       ],
       "returns": [
@@ -491,7 +494,8 @@
             2,
             3,
             4
-          ]
+          ],
+          "description": "读电压"
         }
       ]
     },
@@ -526,7 +530,7 @@
             3,
             4
           ],
-          "description": "读取位移"
+          "description": "读位移"
         }
       ],
       "hiddenColumns": [
@@ -804,6 +808,12 @@
           "type": "str",
           "position": 1
         }
+      ],
+      "hiddenColumns": [
+        "ADDRESS",
+        "CHANNEL",
+        "O",
+        "K"
       ]
     },
     {
@@ -874,6 +884,12 @@
           "type": "str",
           "position": 1
         }
+      ],
+      "hiddenColumns": [
+        "ADDRESS",
+        "CHANNEL",
+        "O",
+        "K"
       ]
     },
     {
@@ -1225,6 +1241,42 @@
           "type": "str",
           "position": 1
         }
+      ]
+    },
+    {
+      "name": "VoltageWaveform_Phase",
+      "cmd1": 66,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5},
+        {"name": "WAVEFORM", "type": "str", "position": 6, "allowvalue": ["Z","J","S","F"]},
+        {"name": "P-P", "type": "float", "positions": [7,8,9,10]},
+        {"name": "FRE", "type": "float", "positions": [11,12,13,14]},
+        {"name": "OFFSET", "type": "float", "positions": [15,16,17,18]},
+        {"name": "Degree", "type": "float", "positions": [19,20,21,22]}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
+      ]
+    },
+    {
+      "name": "RangeWaveform_Phase",
+      "cmd1": 67,
+      "cmd2": 0,
+      "params": [
+        {"name": "ADDRESS", "type": "int", "position": 1},
+        {"name": "CHANNEL", "type": "int", "position": 5},
+        {"name": "WAVEFORM", "type": "str", "position": 6, "allowvalue": ["Z","J","S","F"]},
+        {"name": "P-P", "type": "float", "positions": [7,8,9,10]},
+        {"name": "FRE", "type": "float", "positions": [11,12,13,14]},
+        {"name": "OFFSET", "type": "float", "positions": [15,16,17,18]},
+        {"name": "Degree", "type": "float", "positions": [19,20,21,22]}
+      ],
+      "returns": [
+        {"name": "O", "type": "str", "position": 0},
+        {"name": "K", "type": "str", "position": 1}
       ]
     }
   ],

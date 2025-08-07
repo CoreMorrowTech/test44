@@ -412,7 +412,10 @@ function generateControlInterface(command, device, connection) {
 
         // 执行按钮
         html += `<td style="padding: 8px; text-align: center;">`;
-        html += `<button onclick="executeCommand('${command.name}', ${channel})" style="background-color: #6c9bd1; color: white; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#218838'" onmouseout="this.style.backgroundColor='#28a745'">${buttonDisplayName}</button>`;
+        html += `<button onclick="executeCommand('${command.name}', ${channel})" 
+            onmouseover="highlightRelatedFields('${command.name}', ${channel}, true); this.style.backgroundColor='#218838'" 
+            onmouseout="highlightRelatedFields('${command.name}', ${channel}, false); this.style.backgroundColor='#6c9bd1'" 
+            style="background-color: #6c9bd1; color: white; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background-color 0.2s;">${buttonDisplayName}</button>`;
         html += `</td>`;
 
         html += `</tr>`;
@@ -588,19 +591,19 @@ function handleCommandResult(command, channel, result, params) {
         });
     } else {
         // 简单的成功响应，显示默认值
-        command.returns.forEach(ret => {
-            const fieldId = `${command.name}_${ret.name}_output_${channel}`;
-            const field = document.getElementById(fieldId);
-            if (field) {
-                if (ret.type === 'str') {
-                    field.value = ret.name === 'O' ? 'out' : 'out';
-                } else if (ret.type === 'int') {
-                    field.value = channel.toString();
-                } else if (ret.type === 'float') {
-                    field.value = params.find(p => typeof p === 'number' && p % 1 !== 0) || '0.0';
-                }
-            }
-        });
+        // command.returns.forEach(ret => {
+        //     const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+        //     const field = document.getElementById(fieldId);
+        //     if (field) {
+        //         if (ret.type === 'str') {
+        //             field.value = ret.name === 'O' ? 'out' : 'out';
+        //         } else if (ret.type === 'int') {
+        //             field.value = channel.toString();
+        //         } else if (ret.type === 'float') {
+        //             field.value = params.find(p => typeof p === 'number' && p % 1 !== 0) || '0.0';
+        //         }
+        //     }
+        // });
     }
 }
 
@@ -740,10 +743,11 @@ function generateCombinedTabInterface(combinedTab, device, connection) {
         html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${command.displayName} EXE</th>`;
     });
 
-    // 如果有状态灯配置，添加状态灯列
+    // 如果有状态灯配置，添加状态灯列（支持自定义列名）
     if (combinedTab.statusLights && combinedTab.statusLights.length > 0) {
         combinedTab.statusLights.forEach(statusLight => {
-            html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">伺服状态</th>`;
+            const columnName = statusLight.columnName || statusLight.name || '状态';
+            html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${columnName}</th>`;
         });
     }
 
@@ -784,7 +788,10 @@ function generateCombinedTabInterface(combinedTab, device, connection) {
         // 执行按钮（按顺序排列）
         commands.forEach(command => {
             html += `<td style="padding: 8px; text-align: center;">`;
-            html += `<button onclick="executeCombinedCommand('${command.name}', ${channel}, '${combinedTab.name}')" style="background-color: #6c9bd1; color: white; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#218838'" onmouseout="this.style.backgroundColor='#6c9bd1'">${command.displayName}</button>`;
+            html += `<button onclick="executeCombinedCommand('${command.name}', ${channel}, '${combinedTab.name}')" 
+                onmouseover="highlightCombinedRelatedFields('${command.name}', ${channel}, '${combinedTab.name}', true); this.style.backgroundColor='#218838'" 
+                onmouseout="highlightCombinedRelatedFields('${command.name}', ${channel}, '${combinedTab.name}', false); this.style.backgroundColor='#6c9bd1'" 
+                style="background-color: #6c9bd1; color: white; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background-color 0.2s;">${command.displayName}</button>`;
             html += `</td>`;
         });
 
@@ -986,19 +993,19 @@ function handleCombinedCommandResult(command, channel, result, params, tabName) 
         });
     } else {
         // 简单的成功响应，显示默认值
-        command.returns.forEach(ret => {
-            const fieldId = `${tabName}_${ret.name}_output_${channel}`;
-            const field = document.getElementById(fieldId);
-            if (field) {
-                if (ret.type === 'str') {
-                    field.value = ret.name === 'O' ? 'out' : 'out';
-                } else if (ret.type === 'int') {
-                    field.value = channel.toString();
-                } else if (ret.type === 'float') {
-                    field.value = params.find(p => typeof p === 'number' && p % 1 !== 0) || '0.0';
-                }
-            }
-        });
+        // command.returns.forEach(ret => {
+        //     const fieldId = `${tabName}_${ret.name}_output_${channel}`;
+        //     const field = document.getElementById(fieldId);
+        //     if (field) {
+        //         if (ret.type === 'str') {
+        //             field.value = ret.name === 'O' ? 'out' : 'out';
+        //         } else if (ret.type === 'int') {
+        //             field.value = channel.toString();
+        //         } else if (ret.type === 'float') {
+        //             field.value = params.find(p => typeof p === 'number' && p % 1 !== 0) || '0.0';
+        //         }
+        //     }
+        // });
     }
 }
 
@@ -1595,7 +1602,9 @@ window.executeCommand = executeCommand;
 window.executeCombinedCommand = executeCombinedCommand;
 window.executeToggleStatusCommand = executeToggleStatusCommand;
 window.readToggleStatusCommand = readToggleStatusCommand;
-window.executeCombinedToggleStatusCommand = executeCombinedToggleStatusCommand;/*
+window.executeCombinedToggleStatusCommand = executeCombinedToggleStatusCommand;
+window.highlightRelatedFields = highlightRelatedFields;
+window.highlightCombinedRelatedFields = highlightCombinedRelatedFields;/*
 *
  * 执行组合选项卡中的切换状态命令
  * @param {string} commandName - 命令名称
@@ -1833,6 +1842,118 @@ function updateCombinedToggleButtonsState(statusLight, channel, activeValue) {
                 btnElement.style.color = '#6c757d';
                 btnElement.style.fontWeight = 'normal';
                 btnElement.style.boxShadow = 'none';
+            }
+        }
+    });
+}/**
+
+ * 高亮显示相关字段（普通选项卡）
+ * @param {string} commandName - 命令名称
+ * @param {number} channel - 通道号
+ * @param {boolean} highlight - 是否高亮
+ */
+function highlightRelatedFields(commandName, channel, highlight) {
+    // 获取命令配置
+    const command = commandConfig.commands.find(cmd => cmd.name === commandName);
+    if (!command) return;
+
+    // 高亮输入字段
+    command.params.forEach(param => {
+        if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL') {
+            const fieldId = `${commandName}_${param.name}_${channel}`;
+            const field = document.getElementById(fieldId);
+            if (field) {
+                if (highlight) {
+                    field.style.transform = 'scale(1.05)';
+                    field.style.boxShadow = '0 4px 12px rgba(108, 155, 209, 0.4)';
+                    field.style.borderBottomColor = '#4a90e2';
+                    field.style.transition = 'all 0.3s ease';
+                    field.style.zIndex = '10';
+                } else {
+                    field.style.transform = 'scale(1)';
+                    field.style.boxShadow = 'none';
+                    field.style.borderBottomColor = '#6c9bd1';
+                    field.style.zIndex = '1';
+                }
+            }
+        }
+    });
+
+    // 高亮输出字段
+    command.returns.forEach(ret => {
+        const fieldId = `${commandName}_${ret.name}_output_${channel}`;
+        const field = document.getElementById(fieldId);
+        if (field) {
+            if (highlight) {
+                field.style.transform = 'scale(1.05)';
+                field.style.boxShadow = '0 4px 12px rgba(108, 155, 209, 0.4)';
+                field.style.borderBottomColor = '#4a90e2';
+                field.style.transition = 'all 0.3s ease';
+                field.style.zIndex = '10';
+            } else {
+                field.style.transform = 'scale(1)';
+                field.style.boxShadow = 'none';
+                field.style.borderBottomColor = '#6c9bd1';
+                field.style.zIndex = '1';
+            }
+        }
+    });
+}
+
+/**
+ * 高亮显示相关字段（组合选项卡）
+ * @param {string} commandName - 命令名称
+ * @param {number} channel - 通道号
+ * @param {string} tabName - 选项卡名称
+ * @param {boolean} highlight - 是否高亮
+ */
+function highlightCombinedRelatedFields(commandName, channel, tabName, highlight) {
+    // 获取命令配置
+    const command = commandConfig.commands.find(cmd => cmd.name === commandName);
+    if (!command) return;
+
+    // 高亮输入字段
+    command.params.forEach(param => {
+        if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL') {
+            const fieldId = `${tabName}_${param.name}_${channel}`;
+            const field = document.getElementById(fieldId);
+            if (field) {
+                if (highlight) {
+                    field.style.transform = 'scale(1.05)';
+                    field.style.boxShadow = '0 4px 12px rgba(108, 155, 209, 0.4)';
+                    field.style.borderBottomColor = '#4a90e2';
+                    field.style.transition = 'all 0.3s ease';
+                    field.style.zIndex = '10';
+                    field.style.position = 'relative';
+                } else {
+                    field.style.transform = 'scale(1)';
+                    field.style.boxShadow = 'none';
+                    field.style.borderBottomColor = '#6c9bd1';
+                    field.style.zIndex = '1';
+                    field.style.position = 'static';
+                }
+            }
+        }
+    });
+
+    // 高亮输出字段
+    command.returns.forEach(ret => {
+        const fieldId = `${tabName}_${ret.name}_output_${channel}`;
+        const field = document.getElementById(fieldId);
+        if (field) {
+            if (highlight) {
+                field.style.transform = 'scale(1.05)';
+                field.style.boxShadow = '0 4px 12px rgba(108, 155, 209, 0.4)';
+                field.style.borderBottomColor = '#4a90e2';
+                field.style.transition = 'all 0.3s ease';
+                field.style.zIndex = '10';
+                field.style.position = 'relative';
+            } else {
+                field.style.transform = 'scale(1)';
+                field.style.boxShadow = 'none';
+                field.style.borderBottomColor = '#6c9bd1';
+                field.style.zIndex = '1';
+                field.style.position = 'static';
             }
         }
     });

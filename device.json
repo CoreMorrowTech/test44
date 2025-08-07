@@ -6,23 +6,31 @@
       "function": [
         {
           "name": "setxChannelRange",
-          "displayName": "设置"
+          "displayName": "设置单路位移"
+        },
+        {
+          "name": "getxChannelVoltageTms",
+          "displayName": "实时读取单路电压"
         },
         {
           "name": "getxChannelRange",
-          "displayName": "读取"
+          "displayName": "读取单路位移"
         },
         {
           "name": "setxChannelServoStatus",
-          "displayName": "设置伺服"
+          "displayName": "设置开闭环"
         },
         {
           "name": "ServoStatusLight",
-          "displayName": "伺服状态灯"
+          "displayName": "开闭环状态"
         },
         {
           "name": "TabB_Combined",
-          "displayName": "选项卡B"
+          "displayName": "单点控制"
+        },
+        {
+          "name": "TabB_Combined2",
+          "displayName": "内置波形控制"
         }
       ]
     }
@@ -30,7 +38,7 @@
   "combinedTabs": [
     {
       "name": "TabB_Combined",
-      "displayName": "选项卡B",
+      "displayName": "单点控制",
       "commands": [
         {
           "name": "setxChannelRange",
@@ -59,9 +67,13 @@
       "statusLights": [
         {
           "name": "ServoStatusInTabB",
+          "columnName": "开/闭环状态",
           "setCommand": "setxChannelServoStatus",
           "getCommand": "getxChannelServoStatus",
-          "allowValues": ["C", "O"],
+          "allowValues": [
+            "C",
+            "O"
+          ],
           "buttons": [
             {
               "value": "C",
@@ -78,13 +90,16 @@
               "textColor": "white"
             }
           ]
-          
         },
         {
           "name": "ADModeInTabB",
+          "columnName": "数模设置",
           "setCommand": "setxChannelADMode",
           "getCommand": "getxChannelADMode",
-          "allowValues": ["A", "D"],
+          "allowValues": [
+            "A",
+            "D"
+          ],
           "buttons": [
             {
               "value": "A",
@@ -101,7 +116,99 @@
               "textColor": "white"
             }
           ]
-          
+        }
+      ]
+    },
+    {
+      "name": "TabB_Combined2",
+      "displayName": "内置波形控制",
+      "commands": [
+        {
+          "name": "VoltageWaveform_HS",
+          "displayName": "12",
+          "order": 1
+        },
+        {
+          "name": "RangeWaveform_HS",
+          "displayName": "13",
+          "order": 2
+        },
+        {
+          "name": "VoltageWaveform_Phase",
+          "displayName": "66",
+          "order": 3
+        },
+        {
+          "name": "RangeWaveform_Phase",
+          "displayName": "67",
+          "order": 4
+        },
+        {
+          "name": "getxChannelVoltageTms",
+          "displayName": "7",
+          "order": 5
+        },
+        {
+          "name": "stopAllVoltage_RangeTms",
+          "displayName": "11",
+          "order": 6
+        }
+      ],
+      "layout": "combined_table",
+      "mergeInputOutput": true,
+      "adjustableOrder": true,
+      "statusLights": [
+        {
+          "name": "ServoStatusInTabB",
+          "columnName": "开/闭环状态",
+          "setCommand": "setxChannelServoStatus",
+          "getCommand": "getxChannelServoStatus",
+          "allowValues": [
+            "C",
+            "O"
+          ],
+          "buttons": [
+            {
+              "value": "C",
+              "displayName": "C",
+              "inactiveColor": "#e9ecef",
+              "activeColor": "#6c9bd1",
+              "textColor": "white"
+            },
+            {
+              "value": "O",
+              "displayName": "O",
+              "inactiveColor": "#e9ecef",
+              "activeColor": "#6c9bd1",
+              "textColor": "white"
+            }
+          ]
+        },
+        {
+          "name": "ADModeInTabB",
+          "columnName": "数模设置",
+          "setCommand": "setxChannelADMode",
+          "getCommand": "getxChannelADMode",
+          "allowValues": [
+            "A",
+            "D"
+          ],
+          "buttons": [
+            {
+              "value": "A",
+              "displayName": "A",
+              "inactiveColor": "#e9ecef",
+              "activeColor": "#6c9bd1",
+              "textColor": "white"
+            },
+            {
+              "value": "D",
+              "displayName": "D",
+              "inactiveColor": "#e9ecef",
+              "activeColor": "#6c9bd1",
+              "textColor": "white"
+            }
+          ]
         }
       ]
     }
@@ -109,11 +216,17 @@
   "statusLights": [
     {
       "name": "ServoStatusLight",
-      "displayName": "伺服状态灯",
+      "displayName": "切换状态demo",
       "setCommand": "setxChannelServoStatus",
       "getCommand": "getxChannelServoStatus",
-      "allowValues": ["C", "O"],
-      "hiddenColumns": ["ADDRESS", "CHANNEL"],
+      "allowValues": [
+        "C",
+        "O"
+      ],
+      "hiddenColumns": [
+        "ADDRESS",
+        "CHANNEL"
+      ],
       "buttons": [
         {
           "value": "C",
