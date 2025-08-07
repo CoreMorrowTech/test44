@@ -4,40 +4,11 @@
       "name": "Device Model 1",
       "channeltotal": 4,
       "function": [
-        {
-          "name": "getxChannelVoltageTms"
-        },
-        {
-          "name": "setxChannelRange"
-        },
-        {
-          "name": "setxChannelRange"
-        },
-        {
-          "name": "SingleChannelVoltage"
-        },
-        {
-          "name": "ReadSingleChannelVoltage"
-        },
-        {
-          "name": "getAddress"
-        },
-        {
-          "name": "VoltageWaveform_HS"
-        }
-      ]
-    },
-    {
-      "name": "Device Model 2",
-      "channeltotal": 3,
-      "function": [
-        {
-          "name": "setxChannelVoltage"
-        },
-        {
-          "name": "setxChannelRange"
-        }
+        {"name": "setxChannelRange"},
+        {"name": "getxChannelRange"},
+        {"name": "setxChannelServoStatus"}
       ]
     }
+    
   ]
 }
