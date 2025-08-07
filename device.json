@@ -14,7 +14,11 @@
         },
         {
           "name": "setxChannelServoStatus",
-          "displayName": "设置"
+          "displayName": "设置伺服"
+        },
+        {
+          "name": "ServoStatusLight",
+          "displayName": "伺服状态灯"
         },
         {
           "name": "TabB_Combined",
@@ -51,7 +55,59 @@
       ],
       "layout": "combined_table",
       "mergeInputOutput": true,
-      "adjustableOrder": true
+      "adjustableOrder": true,
+      "statusLights": [
+        {
+          "name": "ServoStatusInTabB",
+          "setCommand": "setxChannelServoStatus",
+          "getCommand": "getxChannelServoStatus",
+          "allowValues": ["C", "O"],
+          "buttons": [
+            {
+              "value": "C",
+              "displayName": "C",
+              "inactiveColor": "#e9ecef",
+              "activeColor": "#6c9bd1",
+              "textColor": "white"
+            },
+            {
+              "value": "O",
+              "displayName": "O",
+              "inactiveColor": "#e9ecef",
+              "activeColor": "#6c9bd1",
+              "textColor": "white"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "statusLights": [
+    {
+      "name": "ServoStatusLight",
+      "displayName": "伺服状态灯",
+      "setCommand": "setxChannelServoStatus",
+      "getCommand": "getxChannelServoStatus",
+      "allowValues": ["C", "O"],
+      "hiddenColumns": ["ADDRESS", "CHANNEL"],
+      "buttons": [
+        {
+          "value": "C",
+          "displayName": "C",
+          "inactiveColor": "#e9ecef",
+          "activeColor": "#6c9bd1",
+          "textColor": "white"
+        },
+        {
+          "value": "O",
+          "displayName": "O",
+          "inactiveColor": "#e9ecef",
+          "activeColor": "#6c9bd1",
+          "textColor": "white"
+        }
+      ],
+      "layout": "toggle_buttons",
+      "autoRead": false
     }
   ]
 }
