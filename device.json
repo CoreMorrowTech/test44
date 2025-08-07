@@ -6,15 +6,15 @@
       "function": [
         {
           "name": "setxChannelRange",
-          "displayName": "设置范围"
+          "displayName": "设置"
         },
         {
           "name": "getxChannelRange",
-          "displayName": "读取范围"
+          "displayName": "读取"
         },
         {
           "name": "setxChannelServoStatus",
-          "displayName": "设置伺服"
+          "displayName": "设置"
         },
         {
           "name": "TabB_Combined",
@@ -30,18 +30,23 @@
       "commands": [
         {
           "name": "setxChannelRange",
-          "displayName": "设置",
+          "displayName": "位移",
           "order": 1
         },
         {
           "name": "getxChannelRange",
-          "displayName": "命令6",
+          "displayName": "位移",
+          "order": 3
+        },
+        {
+          "name": "setxChannelVoltage",
+          "displayName": "电压",
           "order": 2
         },
         {
-          "name": "setxChannelServoStatus",
-          "displayName": "命令7",
-          "order": 3
+          "name": "getxChannelVoltage",
+          "displayName": "电压",
+          "order": 4
         }
       ],
       "layout": "combined_table",
