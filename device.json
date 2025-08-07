@@ -78,6 +78,30 @@
               "textColor": "white"
             }
           ]
+          
+        },
+        {
+          "name": "ADModeInTabB",
+          "setCommand": "setxChannelADMode",
+          "getCommand": "getxChannelADMode",
+          "allowValues": ["A", "D"],
+          "buttons": [
+            {
+              "value": "A",
+              "displayName": "A",
+              "inactiveColor": "#e9ecef",
+              "activeColor": "#6c9bd1",
+              "textColor": "white"
+            },
+            {
+              "value": "D",
+              "displayName": "D",
+              "inactiveColor": "#e9ecef",
+              "activeColor": "#6c9bd1",
+              "textColor": "white"
+            }
+          ]
+          
         }
       ]
     }

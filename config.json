@@ -1180,8 +1180,8 @@
           "type": "str",
           "position": 6,
           "allowvalue": [
-            "C",
-            "O"
+            "A",
+            "D"
           ]
         }
       ],

@@ -1626,7 +1626,7 @@ function executeCombinedToggleStatusCommand(commandName, channel, value, lightNa
             return;
         }
 
-        // 构建参数数组
+        // 构建参数数组 - 通用逻辑，不写死参数名
         const params = [];
         command.params.forEach(param => {
             let paramValue;
@@ -1634,9 +1634,12 @@ function executeCombinedToggleStatusCommand(commandName, channel, value, lightNa
                 paramValue = parseInt(currentConnection.deviceAddress);
             } else if (param.name === 'CHANNEL') {
                 paramValue = channel;
-            } else if (param.name === 'SERVOSTATUS') {
+            } else if (param.allowvalue && param.allowvalue.includes(value)) {
+                // 如果参数有allowvalue配置且包含当前value，则使用value
+                // 这样可以处理SERVOSTATUS、ADMODE等所有状态参数
                 paramValue = value;
             } else {
+                // 否则使用默认值
                 paramValue = param.type === 'int' ? 0 : (param.type === 'float' ? 0.0 : '');
             }
             params.push(paramValue);
@@ -1766,23 +1769,45 @@ function handleCombinedToggleStatusReadResult(command, channel, result, lightNam
     const statusLight = combinedTab.statusLights?.find(light => light.name === lightName);
     if (!statusLight) return;
 
-    // 从结果中获取状态值
+    // 从结果中获取状态值 - 通用逻辑，根据allowValues动态提取
     let statusValue = null;
+
+    // 方法1: 直接在返回结果中查找匹配allowValues的值
     if (result && typeof result === 'object' && !result.error && !result.data) {
-        // 直接从result对象中获取SERVOSTATUS
-        statusValue = result.SERVOSTATUS;
-    } else if (result.data && Array.isArray(result.data)) {
-        // 从数组中获取状态值（通常在位置1）
-        statusValue = result.data[1];
+        // 在result对象中查找匹配allowValues的值
+        for (const [key, value] of Object.entries(result)) {
+            if (statusLight.allowValues.includes(value)) {
+                statusValue = value;
+                console.log(`从result.${key}中提取状态值: ${value}`);
+                break;
+            }
+        }
     } else if (result.data && typeof result.data === 'object') {
-        // 从对象中获取状态值
-        statusValue = result.data.SERVOSTATUS;
+        // 在result.data对象中查找匹配allowValues的值
+        for (const [key, value] of Object.entries(result.data)) {
+            if (statusLight.allowValues.includes(value)) {
+                statusValue = value;
+                console.log(`从result.data.${key}中提取状态值: ${value}`);
+                break;
+            }
+        }
+    } else if (result.data && Array.isArray(result.data)) {
+        // 从数组中查找匹配allowValues的值
+        for (let i = 0; i < result.data.length; i++) {
+            if (statusLight.allowValues.includes(result.data[i])) {
+                statusValue = result.data[i];
+                console.log(`从result.data[${i}]中提取状态值: ${statusValue}`);
+                break;
+            }
+        }
     }
 
     // 更新按钮状态
     if (statusValue) {
         updateCombinedToggleButtonsState(statusLight, channel, statusValue);
         console.log(`组合切换按钮 Channel${channel} 状态更新为: ${statusValue}`);
+    } else {
+        console.warn(`未能从返回结果中提取有效的状态值，allowValues: ${statusLight.allowValues}, result:`, result);
     }
 }
 
