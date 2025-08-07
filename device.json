@@ -4,11 +4,41 @@
       "name": "Device Model 1",
       "channeltotal": 4,
       "function": [
-        {"name": "setxChannelRange"},
-        {"name": "getxChannelRange"},
-        {"name": "setxChannelServoStatus"}
+        {
+          "name": "setxChannelRange"
+        },
+        {
+          "name": "getxChannelRange"
+        },
+        {
+          "name": "setxChannelServoStatus"
+        },
+        {
+          "name": "TabB_Combined"
+        }
       ]
     }
-    
+  ],
+  "combinedTabs": [
+    {
+      "name": "TabB_Combined",
+      "displayName": "选项卡B",
+      "commands": [
+        {
+          "name": "setxChannelRange",
+          "displayName": "设置",
+          "order": 1
+        },
+        {
+          "name": "getxChannelRange",
+          "displayName": "读取",
+          "order": 2
+        }
+        
+      ],
+      "layout": "combined_table",
+      "mergeInputOutput": true,
+      "adjustableOrder": true
+    }
   ]
 }

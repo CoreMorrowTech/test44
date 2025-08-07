@@ -286,6 +286,14 @@ function showTabContent(functionName, device, connection) {
     const contentArea = document.getElementById('device-content-area');
     if (!contentArea) return;
 
+    // 检查是否是组合选项卡
+    const combinedTab = deviceConfig.combinedTabs?.find(tab => tab.name === functionName);
+    if (combinedTab) {
+        // 生成组合选项卡界面
+        contentArea.innerHTML = generateCombinedTabInterface(combinedTab, device, connection);
+        return;
+    }
+
     // 查找对应的命令配置
     const command = commandConfig.commands.find(cmd => cmd.name === functionName);
     if (!command) {
@@ -629,6 +637,313 @@ function simulateCommandExecution(command, channel, params) {
     });
 
     console.log(`命令 ${command.name} 执行完成，通道 ${channel}`);
+}
+
+/**
+ * 生成组合选项卡界面
+ * @param {Object} combinedTab - 组合选项卡配置
+ * @param {Object} device - 设备配置
+ * @param {Object} connection - 连接信息
+ * @returns {string} HTML字符串
+ */
+function generateCombinedTabInterface(combinedTab, device, connection) {
+    // 获取所有相关命令的配置
+    const commands = combinedTab.commands.map(cmdRef => {
+        const command = commandConfig.commands.find(cmd => cmd.name === cmdRef.name);
+        return {
+            ...command,
+            displayName: cmdRef.displayName,
+            order: cmdRef.order
+        };
+    }).sort((a, b) => a.order - b.order);
+
+    // 收集所有唯一的参数和返回值（合并命令5和6的输入输出）
+    const allParams = new Map();
+    const allReturns = new Map();
+    
+    commands.forEach(command => {
+        command.params.forEach(param => {
+            if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL') {
+                allParams.set(param.name, param);
+            }
+        });
+        command.returns.forEach(ret => {
+            allReturns.set(ret.name, ret);
+        });
+    });
+
+    let html = `
+        <div style="display: flex; align-items: flex-start; gap: 20px;">
+            <!-- 左侧设备信息区域 -->
+            <div style="position: relative; width: 200px; height: 300px; margin-right: 10px;">
+                <div style="background-image: url('${deviceImageMap[device.name] || '3.png'}'); width: 100%; height: 150px; background-size: contain; background-color: #efefef; background-position: center center; background-repeat: no-repeat; margin: 0px auto; border: 1px solid #ccc;"></div>
+                <button style="position: absolute; right: 0%; top: 4%; background-image: url('-.png'); width: 18.86%; height: 2.17vh; background-size: contain; background-position: center; background-repeat: no-repeat; background-color: #efefef; border: 0px solid #000; cursor: pointer;" onclick="closeDeviceControlInterface()"></button>
+                <div style="margin-top: 3%; text-align: left; font-size: 0.8vw; background-color: #efefef;">Product Model: ${device.name}</div>
+                <div style="margin-top: 0%; text-align: left; font-size: 0.8vw; background-color: #efefef;">Product Number: <input type="text" value="2024010978" style="width: 50%; text-align: left; border: 1px solid #efefef; font-size: 0.8vw; background-color: #efefef;"></div>
+            </div>
+            
+            <!-- 右侧组合控制表格区域 -->
+            <div style="flex: 1;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="background-color: #e9ecef; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>
+                            <th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">ADDRESS</th>
+                            <th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>`;
+
+    // 添加合并的参数列标题
+    Array.from(allParams.values()).forEach(param => {
+        html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${param.name}</th>`;
+    });
+
+    // 添加合并的返回值列标题
+    Array.from(allReturns.values()).forEach(ret => {
+        html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${ret.name}</th>`;
+    });
+
+    // 添加命令执行列标题（可调整顺序）
+    commands.forEach(command => {
+        html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${command.displayName} EXE</th>`;
+    });
+
+    html += `</tr></thead><tbody>`;
+
+    // 为每个通道生成一行
+    for (let channel = 1; channel <= device.channeltotal; channel++) {
+        const rowBgColor = channel % 2 === 0 ? '#f8f9fa' : 'white';
+        html += `<tr style="background-color: ${rowBgColor};">`;
+
+        // 通道号
+        html += `<td style="padding: 12px; text-align: center; background-color: #6c9bd1; color: white; font-weight: bold;">Channel${channel}</td>`;
+
+        // ADDRESS（自动填充）
+        html += `<td style="padding: 12px; text-align: center; font-weight: bold;">${connection.deviceAddress}</td>`;
+
+        // CHANNEL（自动填充）
+        html += `<td style="padding: 12px; text-align: center; font-weight: bold;">${channel}</td>`;
+
+        // 合并的参数输入框
+        Array.from(allParams.values()).forEach(param => {
+            html += `<td style="padding: 8px;">`;
+            html += generateCombinedInputField(param, channel, combinedTab.name);
+            html += `</td>`;
+        });
+
+        // 合并的返回值显示框
+        Array.from(allReturns.values()).forEach(ret => {
+            html += `<td style="padding: 8px;">`;
+            html += generateCombinedOutputField(ret, channel, combinedTab.name);
+            html += `</td>`;
+        });
+
+        // 执行按钮（按顺序排列）
+        commands.forEach(command => {
+            html += `<td style="padding: 8px; text-align: center;">`;
+            html += `<button onclick="executeCombinedCommand('${command.name}', ${channel}, '${combinedTab.name}')" style="background-color: #6c9bd1; color: white; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#218838'" onmouseout="this.style.backgroundColor='#6c9bd1'">${command.displayName}</button>`;
+            html += `</td>`;
+        });
+
+        html += `</tr>`;
+    }
+
+    html += `</tbody></table>
+            </div>
+        </div>`;
+
+    return html;
+}
+
+/**
+ * 生成组合输入字段
+ * @param {Object} param - 参数配置
+ * @param {number} channel - 通道号
+ * @param {string} tabName - 选项卡名称
+ * @returns {string} HTML字符串
+ */
+function generateCombinedInputField(param, channel, tabName) {
+    const fieldId = `${tabName}_${param.name}_${channel}`;
+
+    if (param.allowvalue && param.allowvalue.length > 0) {
+        // 下拉选择框
+        let html = `<select id="${fieldId}" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px; background-color: white; font-size: 14px;">`;
+        param.allowvalue.forEach(value => {
+            html += `<option value="${value}">${value}</option>`;
+        });
+        html += `</select>`;
+        return html;
+    } else {
+        // 文本输入框
+        const placeholder = param.description || param.name;
+        return `<input type="text" id="${fieldId}" placeholder="${placeholder}" style="width: 100%; padding: 8px; border: none; border-bottom: 2px solid #6c9bd1; border-radius: 0; font-size: 14px; background: transparent; outline: none; transition: border-bottom-color 0.2s;" onfocus="this.style.borderBottomColor='#4a90e2'; this.style.boxShadow='0 2px 0 0 rgba(74,144,226,0.3)'" onblur="this.style.borderBottomColor='#6c9bd1'; this.style.boxShadow='none'">`;
+    }
+}
+
+/**
+ * 生成组合输出字段
+ * @param {Object} ret - 返回值配置
+ * @param {number} channel - 通道号
+ * @param {string} tabName - 选项卡名称
+ * @returns {string} HTML字符串
+ */
+function generateCombinedOutputField(ret, channel, tabName) {
+    const fieldId = `${tabName}_${ret.name}_output_${channel}`;
+    return `<input type="text" id="${fieldId}" readonly style="width: 100%; padding: 8px; border: none; border-bottom: 2px solid #6c9bd1; border-radius: 0; background: transparent; font-size: 14px; color: #495057; font-weight: 500; outline: none;">`;
+}
+
+/**
+ * 执行组合命令
+ * @param {string} commandName - 命令名称
+ * @param {number} channel - 通道号
+ * @param {string} tabName - 选项卡名称
+ */
+function executeCombinedCommand(commandName, channel, tabName) {
+    try {
+        // 获取命令配置
+        const command = commandConfig.commands.find(cmd => cmd.name === commandName);
+        if (!command) {
+            console.error('未找到命令配置:', commandName);
+            return;
+        }
+
+        // 获取当前连接的通信实例
+        const currentConnection = getCurrentActiveConnection();
+        if (!currentConnection) {
+            console.error('未找到活跃连接');
+            return;
+        }
+
+        const connectionInstance = connectionInstances.get(currentConnection.connectionKey);
+        if (!connectionInstance) {
+            console.error('未找到连接实例');
+            return;
+        }
+
+        // 收集参数值并构建参数数组
+        const params = [];
+        command.params.forEach(param => {
+            let value;
+            if (param.name === 'ADDRESS') {
+                // 从连接信息获取地址
+                value = parseInt(currentConnection.deviceAddress);
+            } else if (param.name === 'CHANNEL') {
+                value = channel;
+            } else {
+                const fieldId = `${tabName}_${param.name}_${channel}`;
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    value = field.value;
+                    // 根据类型转换值
+                    if (param.type === 'int') {
+                        value = parseInt(value) || 0;
+                    } else if (param.type === 'float') {
+                        value = parseFloat(value) || 0.0;
+                    }
+                } else {
+                    value = param.type === 'int' ? 0 : (param.type === 'float' ? 0.0 : '');
+                }
+            }
+            params.push(value);
+        });
+
+        console.log(`执行组合命令: ${commandName}(${params.join(', ')})`);
+
+        // 调用真实的executeCommandJSON函数
+        const result = connectionInstance.executeCommandJSON(commandName, params);
+
+        // 处理执行结果
+        handleCombinedCommandResult(command, channel, result, params, tabName);
+
+    } catch (error) {
+        console.error('执行组合命令失败:', error);
+        // 显示错误信息到输出框
+        showCombinedErrorInOutputFields(command, channel, error.message, tabName);
+    }
+}
+
+/**
+ * 处理组合命令执行结果
+ * @param {Object} command - 命令配置
+ * @param {number} channel - 通道号
+ * @param {Object} result - 执行结果
+ * @param {Array} params - 执行参数
+ * @param {string} tabName - 选项卡名称
+ */
+function handleCombinedCommandResult(command, channel, result, params, tabName) {
+    if (result.error) {
+        console.error(`组合命令执行失败: ${result.error}`);
+        showCombinedErrorInOutputFields(command, channel, result.error, tabName);
+        return;
+    }
+
+    console.log(`组合命令 ${command.name} 执行成功:`, result);
+
+    // 将结果显示到输出框
+    if (result && typeof result === 'object' && !result.error && !result.data) {
+        // 直接从result对象中按名称映射返回值
+        command.returns.forEach(ret => {
+            const fieldId = `${tabName}_${ret.name}_output_${channel}`;
+            const field = document.getElementById(fieldId);
+            if (field && result[ret.name] !== undefined) {
+                field.value = result[ret.name];
+                console.log(`设置组合输出字段 ${ret.name}: ${result[ret.name]}`);
+            }
+        });
+    } else if (result.data && Array.isArray(result.data)) {
+        // 如果返回的是数组数据，按位置映射到返回值字段
+        command.returns.forEach((ret, index) => {
+            const fieldId = `${tabName}_${ret.name}_output_${channel}`;
+            const field = document.getElementById(fieldId);
+            if (field && result.data[index] !== undefined) {
+                field.value = result.data[index];
+            }
+        });
+    } else if (result.data && typeof result.data === 'object') {
+        // 如果返回的是对象，按名称映射
+        command.returns.forEach(ret => {
+            const fieldId = `${tabName}_${ret.name}_output_${channel}`;
+            const field = document.getElementById(fieldId);
+            if (field && result.data[ret.name] !== undefined) {
+                field.value = result.data[ret.name];
+            }
+        });
+    } else {
+        // 简单的成功响应，显示默认值
+        command.returns.forEach(ret => {
+            const fieldId = `${tabName}_${ret.name}_output_${channel}`;
+            const field = document.getElementById(fieldId);
+            if (field) {
+                if (ret.type === 'str') {
+                    field.value = ret.name === 'O' ? 'out' : 'out';
+                } else if (ret.type === 'int') {
+                    field.value = channel.toString();
+                } else if (ret.type === 'float') {
+                    field.value = params.find(p => typeof p === 'number' && p % 1 !== 0) || '0.0';
+                }
+            }
+        });
+    }
+}
+
+/**
+ * 在组合输出框中显示错误信息
+ * @param {Object} command - 命令配置
+ * @param {number} channel - 通道号
+ * @param {string} errorMessage - 错误信息
+ * @param {string} tabName - 选项卡名称
+ */
+function showCombinedErrorInOutputFields(command, channel, errorMessage, tabName) {
+    command.returns.forEach(ret => {
+        const fieldId = `${tabName}_${ret.name}_output_${channel}`;
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.value = `Error: ${errorMessage}`;
+            field.style.color = 'red';
+            // 3秒后恢复正常颜色
+            setTimeout(() => {
+                field.style.color = '';
+            }, 3000);
+        }
+    });
 }
 
 /**

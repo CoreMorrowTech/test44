@@ -86,7 +86,8 @@
       "returns": [
         {"name": "O", "type": "str", "position": 0},
         {"name": "K", "type": "str", "position": 1}
-      ]
+      ],
+      "hiddenColumns": ["ADDRESS","CHANNEL","O", "K"]
     },
     {
       "name": "setThreeChannelVoltage",
@@ -154,7 +155,8 @@
       "returns": [
         {"name": "CHANNEL", "type": "int", "position": 0},
         {"name": "RANGE", "type": "float", "positions": [1,2,3,4]}
-      ]
+      ],
+      "hiddenColumns": ["ADDRESS","CHANNEL","O", "K"]
     },
     {
       "name": "getxChannelVoltageTms",
@@ -331,7 +333,8 @@
       "returns": [
         {"name": "CHANNEL", "type": "int", "position": 0},
         {"name": "SERVOSTATUS", "type": "str", "position": 1}
-      ]
+      ],
+      "hiddenColumns": ["ADDRESS","CHANNEL","O", "K"]
     },
     {
       "name": "getxChannelServoStatus",
