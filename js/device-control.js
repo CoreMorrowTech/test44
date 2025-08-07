@@ -344,17 +344,19 @@ function generateControlInterface(command, device, connection) {
         html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>`;
     }
 
-    // 添加参数列标题（除了ADDRESS和CHANNEL，且未隐藏的）
+    // 添加参数列标题（除了ADDRESS和CHANNEL，且未隐藏的，优先显示description）
     command.params.forEach(param => {
         if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL' && !hiddenColumns.includes(param.name)) {
-            html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${param.name}</th>`;
+            const displayName = param.description || param.name;
+            html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${displayName}</th>`;
         }
     });
 
-    // 添加返回值列标题（未隐藏的）
+    // 添加返回值列标题（未隐藏的，优先显示description）
     command.returns.forEach(ret => {
         if (!hiddenColumns.includes(ret.name)) {
-            html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${ret.name}</th>`;
+            const displayName = ret.description || ret.name;
+            html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${displayName}</th>`;
         }
     });
 
@@ -657,18 +659,28 @@ function generateCombinedTabInterface(combinedTab, device, connection) {
         };
     }).sort((a, b) => a.order - b.order);
 
-    // 收集所有唯一的参数和返回值（合并命令5和6的输入输出）
+    // 收集所有命令的隐藏列配置
+    const allHiddenColumns = new Set();
+    commands.forEach(command => {
+        if (command.hiddenColumns) {
+            command.hiddenColumns.forEach(col => allHiddenColumns.add(col));
+        }
+    });
+
+    // 收集所有唯一的参数和返回值（合并命令的输入输出，但排除隐藏列）
     const allParams = new Map();
     const allReturns = new Map();
     
     commands.forEach(command => {
         command.params.forEach(param => {
-            if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL') {
+            if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL' && !allHiddenColumns.has(param.name)) {
                 allParams.set(param.name, param);
             }
         });
         command.returns.forEach(ret => {
-            allReturns.set(ret.name, ret);
+            if (!allHiddenColumns.has(ret.name)) {
+                allReturns.set(ret.name, ret);
+            }
         });
     });
 
@@ -687,18 +699,28 @@ function generateCombinedTabInterface(combinedTab, device, connection) {
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr>
-                            <th style="background-color: #e9ecef; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>
-                            <th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">ADDRESS</th>
-                            <th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>`;
+                            <th style="background-color: #e9ecef; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>`;
 
-    // 添加合并的参数列标题
+    // 添加ADDRESS列标题（如果未隐藏）
+    if (!allHiddenColumns.has('ADDRESS')) {
+        html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">ADDRESS</th>`;
+    }
+
+    // 添加CHANNEL列标题（如果未隐藏）
+    if (!allHiddenColumns.has('CHANNEL')) {
+        html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>`;
+    }
+
+    // 添加合并的参数列标题（未隐藏的，优先显示description）
     Array.from(allParams.values()).forEach(param => {
-        html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${param.name}</th>`;
+        const displayName = param.description || param.name;
+        html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${displayName}</th>`;
     });
 
-    // 添加合并的返回值列标题
+    // 添加合并的返回值列标题（未隐藏的，优先显示description）
     Array.from(allReturns.values()).forEach(ret => {
-        html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${ret.name}</th>`;
+        const displayName = ret.description || ret.name;
+        html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${displayName}</th>`;
     });
 
     // 添加命令执行列标题（可调整顺序）
@@ -716,20 +738,24 @@ function generateCombinedTabInterface(combinedTab, device, connection) {
         // 通道号
         html += `<td style="padding: 12px; text-align: center; background-color: #6c9bd1; color: white; font-weight: bold;">Channel${channel}</td>`;
 
-        // ADDRESS（自动填充）
-        html += `<td style="padding: 12px; text-align: center; font-weight: bold;">${connection.deviceAddress}</td>`;
+        // ADDRESS（自动填充，如果未隐藏）
+        if (!allHiddenColumns.has('ADDRESS')) {
+            html += `<td style="padding: 12px; text-align: center; font-weight: bold;">${connection.deviceAddress}</td>`;
+        }
 
-        // CHANNEL（自动填充）
-        html += `<td style="padding: 12px; text-align: center; font-weight: bold;">${channel}</td>`;
+        // CHANNEL（自动填充，如果未隐藏）
+        if (!allHiddenColumns.has('CHANNEL')) {
+            html += `<td style="padding: 12px; text-align: center; font-weight: bold;">${channel}</td>`;
+        }
 
-        // 合并的参数输入框
+        // 合并的参数输入框（未隐藏的）
         Array.from(allParams.values()).forEach(param => {
             html += `<td style="padding: 8px;">`;
             html += generateCombinedInputField(param, channel, combinedTab.name);
             html += `</td>`;
         });
 
-        // 合并的返回值显示框
+        // 合并的返回值显示框（未隐藏的）
         Array.from(allReturns.values()).forEach(ret => {
             html += `<td style="padding: 8px;">`;
             html += generateCombinedOutputField(ret, channel, combinedTab.name);
