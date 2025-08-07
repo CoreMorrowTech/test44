@@ -5,24 +5,23 @@
       "channeltotal": 4,
       "function": [
         {
-          "name": "setxChannelVoltage"
+          "name": "getxChannelVoltageTms"
         },
         {
           "name": "setxChannelRange"
-        }
-        ,
+        },
+        {
+          "name": "setxChannelRange"
+        },
         {
           "name": "SingleChannelVoltage"
-        }
-        ,
+        },
         {
           "name": "ReadSingleChannelVoltage"
-        }
-        ,
+        },
         {
           "name": "getAddress"
-        }
-        ,
+        },
         {
           "name": "VoltageWaveform_HS"
         }

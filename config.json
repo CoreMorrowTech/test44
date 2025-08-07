@@ -13,8 +13,9 @@
       ],
       "returns": [
         {"name": "O", "type": "str", "position": 0},
-        {"name": "K", "type": "str", "position": 1}
-      ]
+        {"name": "K", "type": "str", "position": 1}        
+      ],
+      "hiddenColumns": ["CHANNEL","O", "K"]
     },
     {
       "name": "ReadSingleChannelVoltage",

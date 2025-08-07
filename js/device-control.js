@@ -305,6 +305,9 @@ function showTabContent(functionName, device, connection) {
  * @returns {string} HTML字符串
  */
 function generateControlInterface(command, device, connection) {
+    // 获取当前命令的隐藏列配置
+    const hiddenColumns = command.hiddenColumns || [];
+    
     let html = `
         <div style="display: flex; align-items: flex-start; gap: 20px;">
             <!-- 左侧设备信息区域 -->
@@ -321,21 +324,30 @@ function generateControlInterface(command, device, connection) {
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr>
-                            <th style="background-color: #e9ecef; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>
-                            <th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">ADDRESS</th>
-                            <th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>
-    `;
+                            <th style="background-color: #e9ecef; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>`;
 
-    // 添加参数列标题（除了ADDRESS和CHANNEL）
+    // 添加ADDRESS列标题（如果未隐藏）
+    if (!hiddenColumns.includes('ADDRESS')) {
+        html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">ADDRESS</th>`;
+    }
+
+    // 添加CHANNEL列标题（如果未隐藏）
+    if (!hiddenColumns.includes('CHANNEL')) {
+        html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">CHANNEL</th>`;
+    }
+
+    // 添加参数列标题（除了ADDRESS和CHANNEL，且未隐藏的）
     command.params.forEach(param => {
-        if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL') {
+        if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL' && !hiddenColumns.includes(param.name)) {
             html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${param.name}</th>`;
         }
     });
 
-    // 添加返回值列标题
+    // 添加返回值列标题（未隐藏的）
     command.returns.forEach(ret => {
-        html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${ret.name}</th>`;
+        if (!hiddenColumns.includes(ret.name)) {
+            html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">${ret.name}</th>`;
+        }
     });
 
     html += `<th style="background-color: #6c9bd1; color: white; padding: 12px; font-weight: bold; text-align: center;">EXE</th></tr></thead><tbody>`;
@@ -348,26 +360,32 @@ function generateControlInterface(command, device, connection) {
         // 通道号
         html += `<td style="padding: 12px; text-align: center; background-color: #6c9bd1; color: white; font-weight: bold;">Channel${channel}</td>`;
 
-        // ADDRESS（自动填充）
-        html += `<td style="padding: 12px; text-align: center; font-weight: bold;">${connection.deviceAddress}</td>`;
+        // ADDRESS（自动填充，如果未隐藏）
+        if (!hiddenColumns.includes('ADDRESS')) {
+            html += `<td style="padding: 12px; text-align: center; font-weight: bold;">${connection.deviceAddress}</td>`;
+        }
 
-        // CHANNEL（自动填充）
-        html += `<td style="padding: 12px; text-align: center; font-weight: bold;">${channel}</td>`;
+        // CHANNEL（自动填充，如果未隐藏）
+        if (!hiddenColumns.includes('CHANNEL')) {
+            html += `<td style="padding: 12px; text-align: center; font-weight: bold;">${channel}</td>`;
+        }
 
-        // 其他参数输入框
+        // 其他参数输入框（未隐藏的）
         command.params.forEach(param => {
-            if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL') {
+            if (param.name !== 'ADDRESS' && param.name !== 'CHANNEL' && !hiddenColumns.includes(param.name)) {
                 html += `<td style="padding: 8px;">`;
                 html += generateInputField(param, channel, command.name);
                 html += `</td>`;
             }
         });
 
-        // 返回值显示框
+        // 返回值显示框（未隐藏的）
         command.returns.forEach(ret => {
-            html += `<td style="padding: 8px;">`;
-            html += generateOutputField(ret, channel, command.name);
-            html += `</td>`;
+            if (!hiddenColumns.includes(ret.name)) {
+                html += `<td style="padding: 8px;">`;
+                html += generateOutputField(ret, channel, command.name);
+                html += `</td>`;
+            }
         });
 
         // 执行按钮
@@ -553,7 +571,7 @@ function handleCommandResult(command, channel, result, params) {
             const field = document.getElementById(fieldId);
             if (field) {
                 if (ret.type === 'str') {
-                    field.value = ret.name === 'O' ? 'O' : 'K';
+                    field.value = ret.name === 'O' ? 'out' : 'out';
                 } else if (ret.type === 'int') {
                     field.value = channel.toString();
                 } else if (ret.type === 'float') {
