@@ -151,7 +151,7 @@ function createAddressContainer() {
 
     const addressInput = document.createElement('input');
     addressInput.type = 'text';
-    addressInput.value = '8';
+    addressInput.value = '1';
     addressInput.style.width = '50%';
     addressInput.style.textAlign = 'left';
     addressInput.style.border = '0px solid #d3d3d3';
@@ -179,7 +179,7 @@ function createControlContainer(deviceId) {
     const modes = [
         {
             label: 'RS-232',
-            inputs: ['COM1', '115200dps', '8 data bits', '1 stop bit', 'No parity']
+            inputs: ['COM9', '1382400dps', '8 data bits', '1 stop bit', 'No parity']
         },
         {
             label: 'RS-422',
