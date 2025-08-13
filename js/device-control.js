@@ -89,7 +89,7 @@ async function loadDeviceConfigs() {
         deviceConfig = JSON.parse(deviceData);
 
         // 加载config.json
-        const configPath = getConfigFilePath('config.json');
+        const configPath = getConfigFilePath('x64\\Debug\\config.json');
         if (!configPath) {
             throw new Error('未找到 config.json 文件');
         }

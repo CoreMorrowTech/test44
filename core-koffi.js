@@ -22,17 +22,18 @@ function getDllPath() {
     const resourcesPath = app ? process.resourcesPath : path.dirname(__dirname);
     
     const possiblePaths = [
-        // 开发环境路径
-        path.join(__dirname, '3App.dll'),
-        path.join(__dirname, '../3App.dll'),
+        'E:\\C++\\NewDll\\DLL\\x64\\Debug\\3App.dll'
+        // // 开发环境路径
+        // path.join(__dirname, '3App.dll'),
+        // path.join(__dirname, '../3App.dll'),
         
-        // 打包后的路径 - extraFiles 会将 DLL 复制到应用根目录
-        path.join(path.dirname(resourcesPath), '3App.dll'),
-        path.join(resourcesPath, '3App.dll'),
+        // // 打包后的路径 - extraFiles 会将 DLL 复制到应用根目录
+        // path.join(path.dirname(resourcesPath), '3App.dll'),
+        // path.join(resourcesPath, '3App.dll'),
         
-        // 备用路径
-        path.join(path.dirname(appPath), '3App.dll'),
-        path.join(process.cwd(), '3App.dll'),
+        // // 备用路径
+        // path.join(path.dirname(appPath), '3App.dll'),
+        // path.join(process.cwd(), '3App.dll'),
     ];
 
     for (const dllPath of possiblePaths) {
@@ -60,17 +61,18 @@ function getConfigPath() {
     const resourcesPath = app ? process.resourcesPath : path.dirname(__dirname);
     
     const possiblePaths = [
-        // 开发环境路径
-        path.join(__dirname, 'config.json'),
-        path.join(__dirname, '../config.json'),
+        'E:\\C++\\NewDll\\DLL\\x64\\Debug\\config.json'
+        // // 开发环境路径
+        // path.join(__dirname, 'config.json'),
+        // path.join(__dirname, '../config.json'),
         
-        // 打包后的路径 - extraFiles 会将配置文件复制到应用根目录
-        path.join(path.dirname(resourcesPath), 'config.json'),
-        path.join(resourcesPath, 'config.json'),
+        // // 打包后的路径 - extraFiles 会将配置文件复制到应用根目录
+        // path.join(path.dirname(resourcesPath), 'config.json'),
+        // path.join(resourcesPath, 'config.json'),
         
-        // 备用路径
-        path.join(path.dirname(appPath), 'config.json'),
-        path.join(process.cwd(), 'config.json'),
+        // // 备用路径
+        // path.join(path.dirname(appPath), 'config.json'),
+        // path.join(process.cwd(), 'config.json'),
     ];
 
     for (const configPath of possiblePaths) {
