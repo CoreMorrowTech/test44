@@ -1365,6 +1365,19 @@ function refreshAsyncStatus() {
                 asyncThreadManager.statusElement.textContent = '无异步命令运行';
                 asyncThreadManager.statusElement.style.color = '#28a745';
             }
+        } else if (typeof connectionInstance.getRunningAsyncCommands === 'function') {
+            // 如果有获取运行中异步命令的方法
+            const runningCommands = connectionInstance.getRunningAsyncCommands();
+            
+            if (runningCommands && runningCommands.length > 0) {
+                const commandList = runningCommands.join(', ');
+                asyncThreadManager.statusElement.textContent = 
+                    `运行中: ${runningCommands.length} 个命令 (${commandList})`;
+                asyncThreadManager.statusElement.style.color = '#fd7e14';
+            } else {
+                asyncThreadManager.statusElement.textContent = '无异步命令运行';
+                asyncThreadManager.statusElement.style.color = '#28a745';
+            }
         } else {
             // 如果底层不支持异步状态查询，使用本地状态
             const localRunningCommands = Array.from(asyncThreadManager.runningCommands.keys());

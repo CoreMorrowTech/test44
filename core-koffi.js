@@ -127,6 +127,13 @@ class CommunicationBase extends EventEmitter {
             this.CallExecuteCommandJSONAsync = this.lib.func('CallExecuteCommandJSONAsync', 'void', ['void*', 'str']);
             this.CallClose = this.lib.func('CallClose', 'void', ['void*']);
 
+            // 异步线程管理函数
+            this.CallStopAsyncCommand = this.lib.func('CallStopAsyncCommand', 'int', ['void*', 'str']);
+            this.CallStopAllAsyncCommands = this.lib.func('CallStopAllAsyncCommands', 'void', ['void*']);
+            this.CallIsAsyncCommandRunning = this.lib.func('CallIsAsyncCommandRunning', 'int', ['void*', 'str']);
+            this.CallGetRunningAsyncCommands = this.lib.func('CallGetRunningAsyncCommands', 'str', ['void*']);
+            this.CallWaitForAsyncCommand = this.lib.func('CallWaitForAsyncCommand', 'int', ['void*', 'str', 'int']);
+
             // 回调函数相关 - 暂时注释掉，先测试基本功能
             // this.DataCallbackFunc = koffi.proto('void DataCallbackFunc(str data)');
             // this.CallSetDataCallback = this.lib.func('CallSetDataCallback', 'void', ['void*', this.DataCallbackFunc]);
@@ -350,10 +357,171 @@ class CommunicationBase extends EventEmitter {
         }
     }
 
+    // ===== 异步线程管理功能 =====
+
+    /**
+     * 停止指定的异步命令
+     * @param {string} cmdName - 要停止的命令名称
+     * @returns {boolean} 成功停止返回true，否则返回false
+     */
+    stopAsyncCommand(cmdName) {
+        try {
+            const result = this.CallStopAsyncCommand(this.obj, cmdName);
+            const success = Boolean(result);
+            if (success) {
+                console.log(`异步命令 '${cmdName}' 已停止`);
+            } else {
+                console.log(`异步命令 '${cmdName}' 未在运行或停止失败`);
+            }
+            return success;
+        } catch (error) {
+            console.log(`停止异步命令 '${cmdName}' 时发生错误: ${error.message}`);
+            return false;
+        }
+    }
+
+    /**
+     * 停止所有异步命令
+     */
+    stopAllAsyncCommands() {
+        try {
+            this.CallStopAllAsyncCommands(this.obj);
+            console.log('所有异步命令已停止');
+        } catch (error) {
+            console.log(`停止所有异步命令时发生错误: ${error.message}`);
+        }
+    }
+
+    /**
+     * 检查指定的异步命令是否正在运行
+     * @param {string} cmdName - 要检查的命令名称
+     * @returns {boolean} 正在运行返回true，否则返回false
+     */
+    isAsyncCommandRunning(cmdName) {
+        try {
+            const result = this.CallIsAsyncCommandRunning(this.obj, cmdName);
+            return Boolean(result);
+        } catch (error) {
+            console.log(`检查异步命令 '${cmdName}' 状态时发生错误: ${error.message}`);
+            return false;
+        }
+    }
+
+    /**
+     * 获取所有正在运行的异步命令列表
+     * @returns {Array} 正在运行的命令名称列表
+     */
+    getRunningAsyncCommands() {
+        try {
+            const resultStr = this.CallGetRunningAsyncCommands(this.obj);
+            if (resultStr) {
+                const commands = JSON.parse(resultStr);
+                return Array.isArray(commands) ? commands : [];
+            }
+            return [];
+        } catch (error) {
+            console.log(`获取运行中的异步命令时发生错误: ${error.message}`);
+            return [];
+        }
+    }
+
+    /**
+     * 等待指定的异步命令完成
+     * @param {string} cmdName - 要等待的命令名称
+     * @param {number} timeoutMs - 超时时间（毫秒），默认5秒
+     * @returns {boolean} 命令完成返回true，超时返回false
+     */
+    waitForAsyncCommand(cmdName, timeoutMs = 5000) {
+        try {
+            const result = this.CallWaitForAsyncCommand(this.obj, cmdName, timeoutMs);
+            const success = Boolean(result);
+            if (success) {
+                console.log(`异步命令 '${cmdName}' 已完成`);
+            } else {
+                console.log(`等待异步命令 '${cmdName}' 完成超时`);
+            }
+            return success;
+        } catch (error) {
+            console.log(`等待异步命令 '${cmdName}' 时发生错误: ${error.message}`);
+            return false;
+        }
+    }
+
+    /**
+     * 获取异步命令的整体状态信息
+     * @returns {Object} 包含运行中命令列表和状态信息的对象
+     */
+    getAsyncStatus() {
+        const runningCommands = this.getRunningAsyncCommands();
+        return {
+            running_commands: runningCommands,
+            count: runningCommands.length,
+            has_running: runningCommands.length > 0
+        };
+    }
+
+    /**
+     * 确保可以安全执行同步命令（停止冲突的异步命令）
+     * @param {string} cmdName - 如果指定，只停止该命令；否则停止所有异步命令
+     * @param {number} timeoutMs - 等待停止完成的超时时间（毫秒）
+     * @returns {boolean} 成功清理返回true，否则返回false
+     */
+    ensureSyncExecution(cmdName = null, timeoutMs = 2000) {
+        try {
+            if (cmdName) {
+                // 停止指定命令
+                if (this.isAsyncCommandRunning(cmdName)) {
+                    console.log(`检测到异步命令 '${cmdName}' 正在运行，正在停止...`);
+                    if (this.stopAsyncCommand(cmdName)) {
+                        return this.waitForAsyncCommand(cmdName, timeoutMs);
+                    }
+                    return false;
+                }
+                return true;
+            } else {
+                // 停止所有异步命令
+                const runningCommands = this.getRunningAsyncCommands();
+                if (runningCommands.length > 0) {
+                    console.log(`检测到 ${runningCommands.length} 个异步命令正在运行，正在停止...`);
+                    this.stopAllAsyncCommands();
+                    
+                    // 等待所有命令停止
+                    const startTime = Date.now();
+                    while (Date.now() - startTime < timeoutMs) {
+                        if (this.getRunningAsyncCommands().length === 0) {
+                            console.log('所有异步命令已停止');
+                            return true;
+                        }
+                        // 简单的同步等待
+                        const waitStart = Date.now();
+                        while (Date.now() - waitStart < 100) {
+                            // 等待100ms
+                        }
+                    }
+                    
+                    console.log('等待异步命令停止超时');
+                    return false;
+                }
+                return true;
+            }
+                
+        } catch (error) {
+            console.log(`确保同步执行时发生错误: ${error.message}`);
+            return false;
+        }
+    }
+
     /**
      * 关闭通信
      */
     close() {
+        // 停止所有异步命令
+        try {
+            this.stopAllAsyncCommands();
+        } catch (error) {
+            // 忽略关闭时的异常
+        }
+
         // 清理回调相关资源
         this.stopContinuousListening();
 
