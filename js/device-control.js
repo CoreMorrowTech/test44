@@ -8,6 +8,14 @@ let currentDeviceConnection = null; // 存储当前设备控制界面对应的�
 let deviceConfig = null;
 let commandConfig = null;
 
+// 异步线程管理相关状态
+let asyncThreadManager = {
+    runningCommands: new Map(), // 存储正在运行的异步命令
+    statusUpdateTimer: null,    // 状态更新定时器
+    statusElement: null,        // 状态显示元素
+    isEnabled: false           // 是否启用异步管理
+};
+
 /**
  * 打开设备控制界面
  * @param {string} connectionKey - 连接键值
@@ -177,9 +185,16 @@ function generateDeviceControlInterface(connection) {
     const tabContainer = createTabContainer(device, connection);
     controlInterface.appendChild(tabContainer);
 
+    // 创建异步线程管理面板
+    const asyncPanel = createAsyncThreadManagementPanel();
+    controlInterface.appendChild(asyncPanel);
+
     // 创建内容区域
     const contentArea = createContentArea(device, connection);
     controlInterface.appendChild(contentArea);
+
+    // 启用异步线程管理
+    initializeAsyncThreadManager();
 
     // 添加到页面
     document.body.appendChild(controlInterface);
@@ -256,6 +271,129 @@ function createTabContainer(device, connection) {
 }
 
 /**
+ * 创建异步线程管理面板
+ * @returns {HTMLElement} 异步线程管理面板
+ */
+function createAsyncThreadManagementPanel() {
+    const asyncPanel = document.createElement('div');
+    asyncPanel.id = 'async-thread-panel';
+    asyncPanel.style.cssText = `
+        width: 100%;
+        height: 40px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        box-sizing: border-box;
+        font-size: 14px;
+    `;
+
+    // 状态显示区域
+    const statusArea = document.createElement('div');
+    statusArea.style.cssText = `
+        display: flex;
+        align-items: center;
+        margin-right: 20px;
+    `;
+
+    const statusLabel = document.createElement('span');
+    statusLabel.textContent = '异步状态: ';
+    statusLabel.style.cssText = `
+        color: #495057;
+        margin-right: 8px;
+        font-weight: 500;
+    `;
+
+    const statusDisplay = document.createElement('span');
+    statusDisplay.id = 'async-status-display';
+    statusDisplay.textContent = '无异步命令运行';
+    statusDisplay.style.cssText = `
+        color: #28a745;
+        font-weight: 600;
+        min-width: 200px;
+    `;
+
+    statusArea.appendChild(statusLabel);
+    statusArea.appendChild(statusDisplay);
+
+    // 控制按钮区域
+    const controlArea = document.createElement('div');
+    controlArea.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: auto;
+    `;
+
+    // 停止所有异步命令按钮
+    const stopAllBtn = document.createElement('button');
+    stopAllBtn.textContent = '停止所有异步命令';
+    stopAllBtn.style.cssText = `
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    `;
+    stopAllBtn.onmouseover = () => stopAllBtn.style.backgroundColor = '#c82333';
+    stopAllBtn.onmouseout = () => stopAllBtn.style.backgroundColor = '#dc3545';
+    stopAllBtn.onclick = stopAllAsyncCommands;
+
+    // 刷新状态按钮
+    const refreshBtn = document.createElement('button');
+    refreshBtn.textContent = '刷新状态';
+    refreshBtn.style.cssText = `
+        background-color: #17a2b8;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    `;
+    refreshBtn.onmouseover = () => refreshBtn.style.backgroundColor = '#138496';
+    refreshBtn.onmouseout = () => refreshBtn.style.backgroundColor = '#17a2b8';
+    refreshBtn.onclick = refreshAsyncStatus;
+
+    // 确保同步执行按钮
+    const ensureSyncBtn = document.createElement('button');
+    ensureSyncBtn.textContent = '确保同步执行';
+    ensureSyncBtn.style.cssText = `
+        background-color: #ffc107;
+        color: #212529;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    `;
+    ensureSyncBtn.onmouseover = () => ensureSyncBtn.style.backgroundColor = '#e0a800';
+    ensureSyncBtn.onmouseout = () => ensureSyncBtn.style.backgroundColor = '#ffc107';
+    ensureSyncBtn.onclick = ensureSyncExecution;
+
+    controlArea.appendChild(stopAllBtn);
+    controlArea.appendChild(refreshBtn);
+    controlArea.appendChild(ensureSyncBtn);
+
+    asyncPanel.appendChild(statusArea);
+    asyncPanel.appendChild(controlArea);
+
+    // 存储状态显示元素的引用
+    asyncThreadManager.statusElement = statusDisplay;
+
+    return asyncPanel;
+}
+
+/**
  * 创建内容区域
  * @param {Object} device - 设备配置
  * @param {Object} connection - 连接信息
@@ -266,7 +404,7 @@ function createContentArea(device, connection) {
     contentArea.id = 'device-content-area';
     contentArea.style.cssText = `
         width: 100%;
-        height: calc(100% - 50px);
+        height: calc(100% - 90px);
         background-color: white;
         overflow-y: auto;
         padding: 20px;
@@ -521,7 +659,31 @@ function executeCommand(commandName, channel) {
 
         console.log(`执行命令: ${commandName}(${params.join(', ')})`);
 
-        // 调用真实的executeCommandJSON函数
+        // 检查是否是异步命令（timeout=-1或asyncMode=true）
+        const isAsyncCommand = command.timeout === -1 || command.asyncMode === true;
+        
+        if (isAsyncCommand && asyncThreadManager.isEnabled) {
+            // 检查是否已有同名异步命令在运行
+            if (isAsyncCommandRunning(commandName)) {
+                const shouldStop = confirm(`异步命令 '${commandName}' 已在运行，是否停止旧命令并启动新命令？`);
+                if (shouldStop) {
+                    stopAsyncCommand(commandName);
+                    // 等待一下确保停止完成
+                    setTimeout(() => {
+                        executeAsyncCommand(commandName, params, command, channel);
+                    }, 200);
+                } else {
+                    console.log(`用户取消了重复的异步命令执行: ${commandName}`);
+                }
+                return;
+            } else {
+                // 记录异步命令启动并执行
+                executeAsyncCommand(commandName, params, command, channel);
+                return;
+            }
+        }
+
+        // 执行同步命令
         const result = connectionInstance.executeCommandJSON(commandName, params);
 
         // 处理执行结果
@@ -1031,10 +1193,503 @@ function showCombinedErrorInOutputFields(command, channel, errorMessage, tabName
     });
 }
 
+// ===== 异步线程管理功能实现 =====
+
+/**
+ * 初始化异步线程管理器
+ */
+function initializeAsyncThreadManager() {
+    asyncThreadManager.isEnabled = true;
+    asyncThreadManager.runningCommands.clear();
+    
+    // 启动状态更新定时器
+    startAsyncStatusUpdate();
+    
+    console.log('异步线程管理器已初始化');
+}
+
+/**
+ * 执行异步命令
+ * @param {string} commandName - 命令名称
+ * @param {Array} params - 参数数组
+ * @param {Object} command - 命令配置
+ * @param {number} channel - 通道号
+ */
+function executeAsyncCommand(commandName, params, command, channel) {
+    try {
+        // 获取当前连接的通信实例
+        const currentConnection = getCurrentActiveConnection();
+        if (!currentConnection) {
+            console.error('未找到活跃连接');
+            return;
+        }
+
+        const connectionInstance = connectionInstances.get(currentConnection.connectionKey);
+        if (!connectionInstance) {
+            console.error('未找到连接实例');
+            return;
+        }
+
+        // 记录异步命令启动
+        recordAsyncCommandStart(commandName, { channel, params });
+
+        console.log(`执行异步命令: ${commandName}(${params.join(', ')})`);
+
+        // 检查是否有异步执行方法
+        if (typeof connectionInstance.executeCommandJSONAsync === 'function') {
+            // 使用异步执行方法
+            connectionInstance.executeCommandJSONAsync(commandName, params);
+            console.log(`异步命令 ${commandName} 已启动（使用异步方法）`);
+        } else {
+            // 使用普通方法执行异步命令
+            const result = connectionInstance.executeCommandJSON(commandName, params);
+            
+            // 处理异步命令的启动结果
+            if (result && result.status === 'async_started') {
+                console.log(`异步命令 ${commandName} 已启动:`, result);
+            } else {
+                console.log(`异步命令 ${commandName} 执行结果:`, result);
+                // 如果不是真正的异步命令，从记录中移除
+                recordAsyncCommandComplete(commandName);
+            }
+        }
+
+        // 更新UI状态（如果需要）
+        updateAsyncCommandUI(commandName, channel, true);
+
+    } catch (error) {
+        console.error(`执行异步命令 ${commandName} 失败:`, error);
+        // 从记录中移除失败的命令
+        recordAsyncCommandComplete(commandName);
+        
+        // 显示错误信息
+        if (command && command.returns) {
+            showErrorInOutputFields(command, channel, error.message);
+        }
+    }
+}
+
+/**
+ * 更新异步命令的UI状态
+ * @param {string} commandName - 命令名称
+ * @param {number} channel - 通道号
+ * @param {boolean} isRunning - 是否正在运行
+ */
+function updateAsyncCommandUI(commandName, channel, isRunning) {
+    // 这里可以添加UI更新逻辑，比如禁用/启用按钮等
+    // 例如：改变按钮颜色、添加加载动画等
+    
+    // 查找对应的执行按钮
+    const buttons = document.querySelectorAll(`button[onclick*="executeCommand('${commandName}', ${channel})"]`);
+    buttons.forEach(button => {
+        if (isRunning) {
+            button.style.backgroundColor = '#fd7e14'; // 橙色表示运行中
+            button.textContent = button.textContent.replace('EXE', '运行中...');
+            button.disabled = false; // 保持可点击，用于停止
+        } else {
+            button.style.backgroundColor = '#6c9bd1'; // 恢复原色
+            button.textContent = button.textContent.replace('运行中...', 'EXE');
+            button.disabled = false;
+        }
+    });
+}
+
+/**
+ * 启动异步状态更新
+ */
+function startAsyncStatusUpdate() {
+    if (asyncThreadManager.statusUpdateTimer) {
+        clearInterval(asyncThreadManager.statusUpdateTimer);
+    }
+    
+    // 每2秒更新一次状态
+    asyncThreadManager.statusUpdateTimer = setInterval(() => {
+        refreshAsyncStatus();
+    }, 2000);
+    
+    // 立即更新一次
+    refreshAsyncStatus();
+}
+
+/**
+ * 停止异步状态更新
+ */
+function stopAsyncStatusUpdate() {
+    if (asyncThreadManager.statusUpdateTimer) {
+        clearInterval(asyncThreadManager.statusUpdateTimer);
+        asyncThreadManager.statusUpdateTimer = null;
+    }
+    
+    // 重置状态显示
+    if (asyncThreadManager.statusElement) {
+        asyncThreadManager.statusElement.textContent = '无异步命令运行';
+        asyncThreadManager.statusElement.style.color = '#28a745';
+    }
+}
+
+/**
+ * 刷新异步状态显示
+ */
+function refreshAsyncStatus() {
+    if (!asyncThreadManager.isEnabled || !asyncThreadManager.statusElement) {
+        return;
+    }
+    
+    try {
+        // 获取当前连接的通信实例
+        const currentConnection = getCurrentActiveConnection();
+        if (!currentConnection) {
+            asyncThreadManager.statusElement.textContent = '未连接';
+            asyncThreadManager.statusElement.style.color = '#6c757d';
+            return;
+        }
+
+        const connectionInstance = connectionInstances.get(currentConnection.connectionKey);
+        if (!connectionInstance) {
+            asyncThreadManager.statusElement.textContent = '连接实例不存在';
+            asyncThreadManager.statusElement.style.color = '#dc3545';
+            return;
+        }
+
+        // 检查是否有异步线程管理功能
+        if (typeof connectionInstance.getAsyncStatus === 'function') {
+            // 调用底层的异步状态查询
+            const status = connectionInstance.getAsyncStatus();
+            
+            if (status && status.running_commands && status.running_commands.length > 0) {
+                const commandList = status.running_commands.join(', ');
+                asyncThreadManager.statusElement.textContent = 
+                    `运行中: ${status.running_commands.length} 个命令 (${commandList})`;
+                asyncThreadManager.statusElement.style.color = '#fd7e14';
+            } else {
+                asyncThreadManager.statusElement.textContent = '无异步命令运行';
+                asyncThreadManager.statusElement.style.color = '#28a745';
+            }
+        } else {
+            // 如果底层不支持异步状态查询，使用本地状态
+            const localRunningCommands = Array.from(asyncThreadManager.runningCommands.keys());
+            
+            if (localRunningCommands.length > 0) {
+                const commandList = localRunningCommands.join(', ');
+                asyncThreadManager.statusElement.textContent = 
+                    `本地跟踪: ${localRunningCommands.length} 个命令 (${commandList})`;
+                asyncThreadManager.statusElement.style.color = '#fd7e14';
+            } else {
+                asyncThreadManager.statusElement.textContent = '无异步命令运行';
+                asyncThreadManager.statusElement.style.color = '#28a745';
+            }
+        }
+        
+    } catch (error) {
+        console.error('刷新异步状态失败:', error);
+        asyncThreadManager.statusElement.textContent = `状态获取失败: ${error.message}`;
+        asyncThreadManager.statusElement.style.color = '#dc3545';
+    }
+}
+
+/**
+ * 停止所有异步命令
+ */
+function stopAllAsyncCommands() {
+    try {
+        // 获取当前连接的通信实例
+        const currentConnection = getCurrentActiveConnection();
+        if (!currentConnection) {
+            console.error('未找到活跃连接');
+            alert('未找到活跃连接');
+            return;
+        }
+
+        const connectionInstance = connectionInstances.get(currentConnection.connectionKey);
+        if (!connectionInstance) {
+            console.error('未找到连接实例');
+            alert('未找到连接实例');
+            return;
+        }
+
+        // 检查是否有异步线程管理功能
+        if (typeof connectionInstance.stopAllAsyncCommands === 'function') {
+            // 调用底层的停止所有异步命令
+            connectionInstance.stopAllAsyncCommands();
+            console.log('已调用底层停止所有异步命令');
+        } else {
+            console.warn('底层不支持停止所有异步命令功能');
+        }
+        
+        // 清理本地状态
+        asyncThreadManager.runningCommands.clear();
+        
+        // 立即刷新状态
+        refreshAsyncStatus();
+        
+        alert('所有异步命令已停止');
+        
+    } catch (error) {
+        console.error('停止所有异步命令失败:', error);
+        alert(`停止异步命令失败: ${error.message}`);
+    }
+}
+
+/**
+ * 确保同步执行
+ */
+function ensureSyncExecution() {
+    try {
+        // 获取当前连接的通信实例
+        const currentConnection = getCurrentActiveConnection();
+        if (!currentConnection) {
+            console.error('未找到活跃连接');
+            alert('未找到活跃连接');
+            return;
+        }
+
+        const connectionInstance = connectionInstances.get(currentConnection.connectionKey);
+        if (!connectionInstance) {
+            console.error('未找到连接实例');
+            alert('未找到连接实例');
+            return;
+        }
+
+        // 检查是否有异步线程管理功能
+        if (typeof connectionInstance.ensureSyncExecution === 'function') {
+            // 调用底层的确保同步执行
+            const success = connectionInstance.ensureSyncExecution();
+            
+            if (success) {
+                // 清理本地状态
+                asyncThreadManager.runningCommands.clear();
+                
+                // 立即刷新状态
+                refreshAsyncStatus();
+                
+                alert('异步命令已清理，现在可以安全执行同步命令');
+            } else {
+                alert('清理异步命令失败，同步命令可能出现异常');
+            }
+        } else {
+            // 如果底层不支持，尝试停止所有异步命令
+            console.warn('底层不支持确保同步执行功能，尝试停止所有异步命令');
+            stopAllAsyncCommands();
+        }
+        
+    } catch (error) {
+        console.error('确保同步执行失败:', error);
+        alert(`确保同步执行失败: ${error.message}`);
+    }
+}
+
+/**
+ * 停止指定的异步命令
+ * @param {string} commandName - 命令名称
+ */
+function stopAsyncCommand(commandName) {
+    try {
+        // 获取当前连接的通信实例
+        const currentConnection = getCurrentActiveConnection();
+        if (!currentConnection) {
+            console.error('未找到活跃连接');
+            return false;
+        }
+
+        const connectionInstance = connectionInstances.get(currentConnection.connectionKey);
+        if (!connectionInstance) {
+            console.error('未找到连接实例');
+            return false;
+        }
+
+        // 检查是否有异步线程管理功能
+        if (typeof connectionInstance.stopAsyncCommand === 'function') {
+            // 调用底层的停止指定异步命令
+            const success = connectionInstance.stopAsyncCommand(commandName);
+            
+            if (success) {
+                console.log(`异步命令 '${commandName}' 已停止`);
+            } else {
+                console.warn(`异步命令 '${commandName}' 可能未在运行或停止失败`);
+            }
+            
+            // 从本地状态中移除
+            asyncThreadManager.runningCommands.delete(commandName);
+            
+            // 立即刷新状态
+            refreshAsyncStatus();
+            
+            return success;
+        } else {
+            console.warn('底层不支持停止指定异步命令功能');
+            
+            // 只从本地状态中移除
+            asyncThreadManager.runningCommands.delete(commandName);
+            refreshAsyncStatus();
+            
+            return true;
+        }
+        
+    } catch (error) {
+        console.error(`停止异步命令 '${commandName}' 失败:`, error);
+        return false;
+    }
+}
+
+/**
+ * 检查异步命令是否在运行
+ * @param {string} commandName - 命令名称
+ * @returns {boolean} 是否在运行
+ */
+function isAsyncCommandRunning(commandName) {
+    try {
+        // 获取当前连接的通信实例
+        const currentConnection = getCurrentActiveConnection();
+        if (!currentConnection) {
+            return false;
+        }
+
+        const connectionInstance = connectionInstances.get(currentConnection.connectionKey);
+        if (!connectionInstance) {
+            return false;
+        }
+
+        // 检查是否有异步线程管理功能
+        if (typeof connectionInstance.isAsyncCommandRunning === 'function') {
+            // 调用底层的检查异步命令状态
+            return connectionInstance.isAsyncCommandRunning(commandName);
+        } else {
+            // 使用本地状态
+            return asyncThreadManager.runningCommands.has(commandName);
+        }
+        
+    } catch (error) {
+        console.error(`检查异步命令 '${commandName}' 状态失败:`, error);
+        return false;
+    }
+}
+
+/**
+ * 等待异步命令完成
+ * @param {string} commandName - 命令名称
+ * @param {number} timeoutMs - 超时时间（毫秒）
+ * @returns {Promise<boolean>} 是否完成
+ */
+function waitForAsyncCommand(commandName, timeoutMs = 5000) {
+    return new Promise((resolve) => {
+        const startTime = Date.now();
+        
+        const checkStatus = () => {
+            if (!isAsyncCommandRunning(commandName)) {
+                console.log(`异步命令 '${commandName}' 已完成`);
+                resolve(true);
+                return;
+            }
+            
+            if (Date.now() - startTime >= timeoutMs) {
+                console.warn(`等待异步命令 '${commandName}' 完成超时`);
+                resolve(false);
+                return;
+            }
+            
+            // 继续检查
+            setTimeout(checkStatus, 100);
+        };
+        
+        checkStatus();
+    });
+}
+
+/**
+ * 记录异步命令启动
+ * @param {string} commandName - 命令名称
+ * @param {Object} params - 命令参数
+ */
+function recordAsyncCommandStart(commandName, params) {
+    asyncThreadManager.runningCommands.set(commandName, {
+        startTime: Date.now(),
+        params: params
+    });
+    
+    console.log(`记录异步命令启动: ${commandName}`);
+    refreshAsyncStatus();
+}
+
+/**
+ * 记录异步命令完成
+ * @param {string} commandName - 命令名称
+ */
+function recordAsyncCommandComplete(commandName) {
+    asyncThreadManager.runningCommands.delete(commandName);
+    
+    console.log(`记录异步命令完成: ${commandName}`);
+    refreshAsyncStatus();
+}
+
+/**
+ * 增强的命令执行函数（支持异步线程管理）
+ * @param {string} commandName - 命令名称
+ * @param {number} channel - 通道号
+ */
+function executeCommandWithAsyncManagement(commandName, channel) {
+    try {
+        // 获取命令配置
+        const command = commandConfig.commands.find(cmd => cmd.name === commandName);
+        if (!command) {
+            console.error('未找到命令配置:', commandName);
+            return;
+        }
+
+        // 检查是否是异步命令（timeout=-1或asyncMode=true）
+        const isAsyncCommand = command.timeout === -1 || command.asyncMode === true;
+        
+        if (isAsyncCommand) {
+            // 检查是否已有同名异步命令在运行
+            if (isAsyncCommandRunning(commandName)) {
+                const shouldStop = confirm(`异步命令 '${commandName}' 已在运行，是否停止旧命令并启动新命令？`);
+                if (shouldStop) {
+                    stopAsyncCommand(commandName);
+                    // 等待一下确保停止完成
+                    setTimeout(() => {
+                        executeCommand(commandName, channel);
+                        recordAsyncCommandStart(commandName, { channel });
+                    }, 200);
+                }
+                return;
+            } else {
+                // 记录异步命令启动
+                recordAsyncCommandStart(commandName, { channel });
+            }
+        }
+        
+        // 执行原有的命令执行逻辑
+        executeCommand(commandName, channel);
+        
+    } catch (error) {
+        console.error('增强命令执行失败:', error);
+        executeCommand(commandName, channel); // 回退到原有逻辑
+    }
+}
+
 /**
  * 关闭设备控制界面
  */
 function closeDeviceControlInterface() {
+    // 停止异步状态更新
+    stopAsyncStatusUpdate();
+    
+    // 停止所有异步命令（可选，根据需要决定）
+    try {
+        if (asyncThreadManager.isEnabled && asyncThreadManager.runningCommands.size > 0) {
+            const shouldStopAsync = confirm('检测到有异步命令正在运行，是否在关闭前停止所有异步命令？');
+            if (shouldStopAsync) {
+                stopAllAsyncCommands();
+            }
+        }
+    } catch (error) {
+        console.error('关闭时停止异步命令失败:', error);
+    }
+    
+    // 清理异步管理器状态
+    asyncThreadManager.isEnabled = false;
+    asyncThreadManager.runningCommands.clear();
+    asyncThreadManager.statusElement = null;
+    
     if (currentDeviceInterface) {
         document.body.removeChild(currentDeviceInterface);
         currentDeviceInterface = null;
@@ -1046,7 +1701,7 @@ function closeDeviceControlInterface() {
     // 显示主界面
     showMainInterface();
 
-    console.log('设备控制界面已关闭');
+    console.log('设备控制界面已关闭，异步线程管理器已清理');
 }
 /**
  * 生
@@ -1604,7 +2259,15 @@ window.executeToggleStatusCommand = executeToggleStatusCommand;
 window.readToggleStatusCommand = readToggleStatusCommand;
 window.executeCombinedToggleStatusCommand = executeCombinedToggleStatusCommand;
 window.highlightRelatedFields = highlightRelatedFields;
-window.highlightCombinedRelatedFields = highlightCombinedRelatedFields;/*
+window.highlightCombinedRelatedFields = highlightCombinedRelatedFields;
+
+// 暴露异步线程管理函数
+window.stopAllAsyncCommands = stopAllAsyncCommands;
+window.refreshAsyncStatus = refreshAsyncStatus;
+window.ensureSyncExecution = ensureSyncExecution;
+window.stopAsyncCommand = stopAsyncCommand;
+window.isAsyncCommandRunning = isAsyncCommandRunning;
+window.waitForAsyncCommand = waitForAsyncCommand;/*
 *
  * 执行组合选项卡中的切换状态命令
  * @param {string} commandName - 命令名称
