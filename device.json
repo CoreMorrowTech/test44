@@ -9,12 +9,16 @@
           "displayName": "设置单路位移"
         },
         {
+          "name": "getxChannelRange",
+          "displayName": "读取单路位移"
+        },
+        {
           "name": "getxChannelVoltageTms",
           "displayName": "实时读取单路电压"
         },
         {
-          "name": "getxChannelRange",
-          "displayName": "读取单路位移"
+          "name": "stopAllVoltage_RangeTms",
+          "displayName": "停止"
         },
         {
           "name": "setxChannelServoStatus",
