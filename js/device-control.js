@@ -713,7 +713,7 @@ function getCurrentActiveConnection() {
  * @param {Array} params - 执行参数
  */
 function handleCommandResult(command, channel, result, params) {
-    if (result.error) {
+    if (result && result.error) {
         console.error(`命令执行失败: ${result.error}`);
         showErrorInOutputFields(command, channel, result.error);
         return;
@@ -721,51 +721,255 @@ function handleCommandResult(command, channel, result, params) {
 
     console.log(`命令 ${command.name} 执行成功:`, result);
 
-    // 将结果显示到输出框
-    // 首先检查result是否直接包含返回值（如 {"K":"K","O":"C"}）
+    // 确保command.returns存在
+    if (!command.returns || !Array.isArray(command.returns)) {
+        console.warn(`命令 ${command.name} 没有返回值配置`);
+        return;
+    }
+
+    let dataProcessed = false;
+
+    // 方法1: 直接从result对象中按名称映射返回值（如 {"K":"K","O":"C"}）
     if (result && typeof result === 'object' && !result.error && !result.data) {
-        // 直接从result对象中按名称映射返回值
         command.returns.forEach(ret => {
-            const fieldId = `${command.name}_${ret.name}_output_${channel}`;
-            const field = document.getElementById(fieldId);
-            if (field && result[ret.name] !== undefined) {
-                field.value = result[ret.name];
-                console.log(`设置输出字段 ${ret.name}: ${result[ret.name]}`);
+            if (result[ret.name] !== undefined) {
+                const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    let displayValue = result[ret.name];
+                    if (ret.type === 'float' && typeof displayValue === 'number') {
+                        displayValue = displayValue.toFixed(6);
+                    }
+                    field.value = displayValue;
+                    field.style.color = '#495057'; // 同步数据用默认颜色
+                    console.log(`设置输出字段 ${ret.name}: ${displayValue}`);
+                    dataProcessed = true;
+                }
             }
         });
-    } else if (result.data && Array.isArray(result.data)) {
-        // 如果返回的是数组数据，按位置映射到返回值字段
+    }
+
+    // 方法2: 如果返回的是数组数据，按位置映射到返回值字段
+    if (!dataProcessed && result.data && Array.isArray(result.data)) {
         command.returns.forEach((ret, index) => {
-            const fieldId = `${command.name}_${ret.name}_output_${channel}`;
-            const field = document.getElementById(fieldId);
-            if (field && result.data[index] !== undefined) {
-                field.value = result.data[index];
+            if (result.data[index] !== undefined) {
+                const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    let displayValue = result.data[index];
+                    if (ret.type === 'float' && typeof displayValue === 'number') {
+                        displayValue = displayValue.toFixed(6);
+                    }
+                    field.value = displayValue;
+                    field.style.color = '#495057';
+                    dataProcessed = true;
+                }
             }
         });
-    } else if (result.data && typeof result.data === 'object') {
-        // 如果返回的是对象，按名称映射
+    }
+
+    // 方法3: 如果返回的是对象，按名称映射
+    if (!dataProcessed && result.data && typeof result.data === 'object') {
         command.returns.forEach(ret => {
-            const fieldId = `${command.name}_${ret.name}_output_${channel}`;
-            const field = document.getElementById(fieldId);
-            if (field && result.data[ret.name] !== undefined) {
-                field.value = result.data[ret.name];
+            if (result.data[ret.name] !== undefined) {
+                const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    let displayValue = result.data[ret.name];
+                    if (ret.type === 'float' && typeof displayValue === 'number') {
+                        displayValue = displayValue.toFixed(6);
+                    }
+                    field.value = displayValue;
+                    field.style.color = '#495057';
+                    dataProcessed = true;
+                }
             }
         });
-    } else {
-        // 简单的成功响应，显示默认值
-        // command.returns.forEach(ret => {
-        //     const fieldId = `${command.name}_${ret.name}_output_${channel}`;
-        //     const field = document.getElementById(fieldId);
-        //     if (field) {
-        //         if (ret.type === 'str') {
-        //             field.value = ret.name === 'O' ? 'out' : 'out';
-        //         } else if (ret.type === 'int') {
-        //             field.value = channel.toString();
-        //         } else if (ret.type === 'float') {
-        //             field.value = params.find(p => typeof p === 'number' && p % 1 !== 0) || '0.0';
-        //         }
-        //     }
-        // });
+    }
+
+    // 方法4: 通用处理，尝试多种可能的数据路径
+    if (!dataProcessed) {
+        command.returns.forEach(ret => {
+            let value = result[ret.name] || 
+                       (result.data && result.data[ret.name]) ||
+                       (result.result && result.result[ret.name]);
+            
+            if (value !== undefined) {
+                const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    let displayValue = value;
+                    if (ret.type === 'float' && typeof displayValue === 'number') {
+                        displayValue = displayValue.toFixed(6);
+                    }
+                    field.value = displayValue;
+                    field.style.color = '#495057';
+                    dataProcessed = true;
+                    console.log(`通用处理设置字段 ${ret.name}: ${displayValue}`);
+                }
+            }
+        });
+    }
+
+    if (!dataProcessed) {
+        console.warn(`无法处理命令 ${command.name} 的返回数据:`, result);
+    }
+}
+
+/**
+ * 处理异步命令执行结果
+ * @param {Object} command - 命令配置
+ * @param {number} channel - 通道号
+ * @param {Object} result - 执行结果
+ * @param {Array} params - 执行参数
+ */
+function handleAsyncCommandResult(command, channel, result, params) {
+    if (result && result.error) {
+        console.error(`异步命令执行失败: ${result.error}`);
+        showErrorInOutputFields(command, channel, result.error);
+        return;
+    }
+
+    console.log(`异步命令 ${command.name} 执行成功:`, result);
+
+    // 确保command.returns存在
+    if (!command.returns || !Array.isArray(command.returns)) {
+        console.warn(`异步命令 ${command.name} 没有返回值配置`);
+        return;
+    }
+
+    let dataProcessed = false;
+
+    // 方法1: 直接从result对象中按名称映射返回值（如 {"K":"K","O":"C"}）
+    if (result && typeof result === 'object' && !result.error && !result.data) {
+        command.returns.forEach(ret => {
+            if (result[ret.name] !== undefined) {
+                const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    let displayValue = result[ret.name];
+                    if (ret.type === 'float' && typeof displayValue === 'number') {
+                        displayValue = displayValue.toFixed(6);
+                    }
+                    field.value = displayValue;
+                    field.style.color = '#fd7e14'; // 异步数据用橙色
+                    field.style.backgroundColor = '#fff3cd'; // 添加背景色
+                    setTimeout(() => {
+                        field.style.backgroundColor = '';
+                    }, 500);
+                    console.log(`设置异步输出字段 ${ret.name}: ${displayValue}`);
+                    dataProcessed = true;
+                }
+            }
+        });
+    }
+
+    // 方法2: 如果返回的是数组数据，按位置映射到返回值字段
+    if (!dataProcessed && result.data && Array.isArray(result.data)) {
+        command.returns.forEach((ret, index) => {
+            if (result.data[index] !== undefined) {
+                const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    let displayValue = result.data[index];
+                    if (ret.type === 'float' && typeof displayValue === 'number') {
+                        displayValue = displayValue.toFixed(6);
+                    }
+                    field.value = displayValue;
+                    field.style.color = '#fd7e14';
+                    field.style.backgroundColor = '#fff3cd';
+                    setTimeout(() => {
+                        field.style.backgroundColor = '';
+                    }, 500);
+                    dataProcessed = true;
+                }
+            }
+        });
+    }
+
+    // 方法3: 如果返回的是对象，按名称映射
+    if (!dataProcessed && result.data && typeof result.data === 'object') {
+        command.returns.forEach(ret => {
+            if (result.data[ret.name] !== undefined) {
+                const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    let displayValue = result.data[ret.name];
+                    if (ret.type === 'float' && typeof displayValue === 'number') {
+                        displayValue = displayValue.toFixed(6);
+                    }
+                    field.value = displayValue;
+                    field.style.color = '#fd7e14';
+                    field.style.backgroundColor = '#fff3cd';
+                    setTimeout(() => {
+                        field.style.backgroundColor = '';
+                    }, 500);
+                    dataProcessed = true;
+                }
+            }
+        });
+    }
+
+    // 方法4: 通用处理，尝试多种可能的数据路径
+    if (!dataProcessed) {
+        command.returns.forEach(ret => {
+            let value = result[ret.name] || 
+                       (result.data && result.data[ret.name]) ||
+                       (result.result && result.result[ret.name]);
+            
+            if (value !== undefined) {
+                const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    let displayValue = value;
+                    if (ret.type === 'float' && typeof displayValue === 'number') {
+                        displayValue = displayValue.toFixed(6);
+                    }
+                    field.value = displayValue;
+                    field.style.color = '#fd7e14';
+                    field.style.backgroundColor = '#fff3cd';
+                    setTimeout(() => {
+                        field.style.backgroundColor = '';
+                    }, 500);
+                    dataProcessed = true;
+                    console.log(`异步通用处理设置字段 ${ret.name}: ${displayValue}`);
+                }
+            }
+        });
+    }
+
+    // 方法5: 特殊处理常见的异步数据字段
+    if (!dataProcessed && result) {
+        const commonAsyncFields = ['VOLTAGE', 'CURRENT', 'CHANNEL', 'STATUS', 'VALUE'];
+        command.returns.forEach(ret => {
+            // 尝试匹配常见字段名（不区分大小写）
+            const upperRetName = ret.name.toUpperCase();
+            if (commonAsyncFields.includes(upperRetName)) {
+                let value = result[ret.name] || result[upperRetName] || result[ret.name.toLowerCase()];
+                if (value !== undefined) {
+                    const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+                    const field = document.getElementById(fieldId);
+                    if (field) {
+                        let displayValue = value;
+                        if (ret.type === 'float' && typeof displayValue === 'number') {
+                            displayValue = displayValue.toFixed(6);
+                        }
+                        field.value = displayValue;
+                        field.style.color = '#fd7e14';
+                        field.style.backgroundColor = '#fff3cd';
+                        setTimeout(() => {
+                            field.style.backgroundColor = '';
+                        }, 500);
+                        dataProcessed = true;
+                        console.log(`异步常见字段匹配设置 ${ret.name}: ${displayValue}`);
+                    }
+                }
+            }
+        });
+    }
+
+    if (!dataProcessed) {
+        console.warn(`无法处理异步命令 ${command.name} 的返回数据:`, result);
     }
 }
 
@@ -1240,16 +1444,32 @@ function executeAsyncCommand(commandName, params, command, channel) {
             // 使用异步执行方法
             connectionInstance.executeCommandJSONAsync(commandName, params);
             console.log(`异步命令 ${commandName} 已启动（使用异步方法）`);
+            
+            // 设置数据回调来处理异步命令的持续返回数据
+            setupAsyncCommandCallback(connectionInstance, command, channel, commandName);
         } else {
             // 使用普通方法执行异步命令
             const result = connectionInstance.executeCommandJSON(commandName, params);
             
+            console.log(`异步命令 ${commandName} 执行结果:`, result);
+            
+            // 立即处理返回值（无论是否是异步启动状态）
+            if (result && !result.error) {
+                // 使用异步数据标识来区分显示颜色
+                handleAsyncCommandResult(command, channel, result, params);
+            }
+            
             // 处理异步命令的启动结果
             if (result && result.status === 'async_started') {
-                console.log(`异步命令 ${commandName} 已启动:`, result);
+                console.log(`异步命令 ${commandName} 已启动，设置数据回调`);
+                // 设置数据回调来处理异步命令的持续返回数据
+                setupAsyncCommandCallback(connectionInstance, command, channel, commandName);
+            } else if (command.timeout === -1) {
+                // 对于持续监听的异步命令，即使没有async_started状态也要设置回调
+                console.log(`持续监听异步命令 ${commandName}，设置数据回调`);
+                setupAsyncCommandCallback(connectionInstance, command, channel, commandName);
             } else {
-                console.log(`异步命令 ${commandName} 执行结果:`, result);
-                // 如果不是真正的异步命令，从记录中移除
+                // 如果不是持续监听的异步命令，从记录中移除
                 recordAsyncCommandComplete(commandName);
             }
         }
@@ -1266,6 +1486,258 @@ function executeAsyncCommand(commandName, params, command, channel) {
         if (command && command.returns) {
             showErrorInOutputFields(command, channel, error.message);
         }
+    }
+}
+
+/**
+ * 设置异步命令的数据回调
+ * @param {Object} connectionInstance - 连接实例
+ * @param {Object} command - 命令配置
+ * @param {number} channel - 通道号
+ * @param {string} commandName - 命令名称
+ */
+function setupAsyncCommandCallback(connectionInstance, command, channel, commandName) {
+    try {
+        // 检查连接实例是否支持数据回调
+        if (typeof connectionInstance.setDataCallback === 'function') {
+            // 设置数据回调函数来处理异步命令的持续返回数据
+            connectionInstance.setDataCallback((data) => {
+                console.log(`异步命令 ${commandName} 收到数据:`, data);
+                
+                // 直接处理异步命令的返回数据，不做过多的关联性检查
+                console.log(`异步命令 ${commandName} 收到数据，直接处理:`, data);
+                handleAsyncCommandResult(command, channel, data, []);
+            });
+            
+            console.log(`已为异步命令 ${commandName} 设置数据回调`);
+        } else {
+            console.warn(`连接实例不支持数据回调功能，异步命令 ${commandName} 的持续数据可能无法显示`);
+        }
+    } catch (error) {
+        console.error(`设置异步命令 ${commandName} 数据回调失败:`, error);
+    }
+}
+
+/**
+ * 处理异步命令的数据
+ * @param {Object} command - 命令配置
+ * @param {number} channel - 通道号
+ * @param {Object} data - 接收到的数据
+ * @param {string} commandName - 命令名称
+ */
+function handleAsyncCommandData(command, channel, data, commandName) {
+    try {
+        // 检查数据是否与当前命令相关
+        if (!isDataRelatedToCommand(data, command)) {
+            return; // 数据不相关，忽略
+        }
+        
+        console.log(`处理异步命令 ${commandName} 的数据:`, data);
+        
+        // 使用与同步命令相同的结果处理逻辑
+        handleCommandResult(command, channel, data, []);
+        
+        // 可选：触发UI更新事件
+        const event = new CustomEvent('asyncDataReceived', {
+            detail: {
+                commandName: commandName,
+                channel: channel,
+                data: data
+            }
+        });
+        document.dispatchEvent(event);
+        
+    } catch (error) {
+        console.error(`处理异步命令 ${commandName} 数据失败:`, error);
+    }
+}
+
+/**
+ * 检查数据是否与指定命令相关
+ * @param {Object} data - 接收到的数据
+ * @param {Object} command - 命令配置
+ * @returns {boolean} 是否相关
+ */
+function isDataRelatedToCommand(data, command) {
+    try {
+        // 检查数据中是否包含命令的返回值字段
+        if (!data || typeof data !== 'object') {
+            return false;
+        }
+        
+        // 方法1：检查是否包含命令的任何返回值字段
+        const hasReturnField = command.returns.some(ret => {
+            return data.hasOwnProperty(ret.name) || 
+                   (data.data && data.data.hasOwnProperty(ret.name));
+        });
+        
+        if (hasReturnField) {
+            return true;
+        }
+        
+        // 方法2：对于某些特殊情况，可以根据数据结构判断
+        // 例如，如果数据包含CHANNEL和VOLTAGE字段，可能是电压监控命令的数据
+        if (data.CHANNEL !== undefined && data.VOLTAGE !== undefined) {
+            return command.returns.some(ret => ret.name === 'CHANNEL' || ret.name === 'VOLTAGE');
+        }
+        
+        return false;
+        
+    } catch (error) {
+        console.error('检查数据关联性失败:', error);
+        return false;
+    }
+}
+
+/**
+ * 清除异步命令的数据回调
+ * @param {Object} connectionInstance - 连接实例
+ * @param {string} commandName - 命令名称
+ */
+function clearAsyncCommandCallback(connectionInstance, commandName) {
+    try {
+        // 检查连接实例是否支持清除数据回调
+        if (typeof connectionInstance.setDataCallback === 'function') {
+            // 清除数据回调
+            connectionInstance.setDataCallback(null);
+            console.log(`已清除异步命令 ${commandName} 的数据回调`);
+        } else if (typeof connectionInstance.clearDataCallback === 'function') {
+            // 如果有专门的清除回调方法
+            connectionInstance.clearDataCallback();
+            console.log(`已清除异步命令 ${commandName} 的数据回调（使用clearDataCallback）`);
+        } else {
+            console.warn(`连接实例不支持清除数据回调功能`);
+        }
+    } catch (error) {
+        console.error(`清除异步命令 ${commandName} 数据回调失败:`, error);
+    }
+}
+
+/**
+ * 改进的异步命令数据处理
+ * @param {Object} command - 命令配置
+ * @param {number} channel - 通道号
+ * @param {Object} data - 接收到的数据
+ * @param {string} commandName - 命令名称
+ */
+function handleAsyncCommandDataImproved(command, channel, data, commandName) {
+    try {
+        console.log(`处理异步命令 ${commandName} 的数据:`, data);
+        
+        // 检查数据格式并处理
+        let processedData = data;
+        
+        // 如果数据有特殊的异步标识，进行相应处理
+        if (data && data.status === 'async_data') {
+            processedData = data.data || data;
+        }
+        
+        // 使用改进的结果处理逻辑
+        handleCommandResultImproved(command, channel, processedData, [], true);
+        
+        // 触发异步数据接收事件
+        const event = new CustomEvent('asyncDataReceived', {
+            detail: {
+                commandName: commandName,
+                channel: channel,
+                data: processedData,
+                timestamp: Date.now()
+            }
+        });
+        document.dispatchEvent(event);
+        
+    } catch (error) {
+        console.error(`处理异步命令 ${commandName} 数据失败:`, error);
+    }
+}
+
+/**
+ * 改进的命令结果处理函数
+ * @param {Object} command - 命令配置
+ * @param {number} channel - 通道号
+ * @param {Object} result - 执行结果
+ * @param {Array} params - 执行参数
+ * @param {boolean} isAsyncData - 是否是异步数据
+ */
+function handleCommandResultImproved(command, channel, result, params, isAsyncData = false) {
+    if (result && result.error) {
+        console.error(`命令执行失败: ${result.error}`);
+        showErrorInOutputFields(command, channel, result.error);
+        return;
+    }
+
+    const logPrefix = isAsyncData ? '[异步数据]' : '[同步结果]';
+    console.log(`${logPrefix} 命令 ${command.name} 数据:`, result);
+
+    // 改进的结果处理逻辑
+    let dataProcessed = false;
+
+    // 方法1: 直接从result对象中按名称映射返回值
+    if (result && typeof result === 'object' && !result.error && !result.data) {
+        command.returns.forEach(ret => {
+            if (result[ret.name] !== undefined) {
+                const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    // 格式化显示值
+                    let displayValue = result[ret.name];
+                    if (ret.type === 'float' && typeof displayValue === 'number') {
+                        displayValue = displayValue.toFixed(6); // 显示6位小数
+                    }
+                    
+                    field.value = displayValue;
+                    field.style.color = isAsyncData ? '#fd7e14' : '#495057'; // 异步数据用橙色
+                    
+                    console.log(`${logPrefix} 设置输出字段 ${ret.name}: ${displayValue}`);
+                    dataProcessed = true;
+                }
+            }
+        });
+    }
+
+    // 方法2: 如果返回的是数组数据，按位置映射到返回值字段
+    if (!dataProcessed && result.data && Array.isArray(result.data)) {
+        command.returns.forEach((ret, index) => {
+            if (result.data[index] !== undefined) {
+                const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    let displayValue = result.data[index];
+                    if (ret.type === 'float' && typeof displayValue === 'number') {
+                        displayValue = displayValue.toFixed(6);
+                    }
+                    
+                    field.value = displayValue;
+                    field.style.color = isAsyncData ? '#fd7e14' : '#495057';
+                    dataProcessed = true;
+                }
+            }
+        });
+    }
+
+    // 方法3: 如果返回的是对象，按名称映射
+    if (!dataProcessed && result.data && typeof result.data === 'object') {
+        command.returns.forEach(ret => {
+            if (result.data[ret.name] !== undefined) {
+                const fieldId = `${command.name}_${ret.name}_output_${channel}`;
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    let displayValue = result.data[ret.name];
+                    if (ret.type === 'float' && typeof displayValue === 'number') {
+                        displayValue = displayValue.toFixed(6);
+                    }
+                    
+                    field.value = displayValue;
+                    field.style.color = isAsyncData ? '#fd7e14' : '#495057';
+                    dataProcessed = true;
+                }
+            }
+        });
+    }
+
+    // 如果没有处理任何数据，记录调试信息
+    if (!dataProcessed && !isAsyncData) {
+        console.warn(`${logPrefix} 未能处理命令 ${command.name} 的返回数据:`, result);
     }
 }
 
@@ -1524,6 +1996,9 @@ function stopAsyncCommand(commandName) {
             // 从本地状态中移除
             asyncThreadManager.runningCommands.delete(commandName);
             
+            // 清除数据回调（避免数据混乱）
+            clearAsyncCommandCallback(connectionInstance, commandName);
+            
             // 立即刷新状态
             refreshAsyncStatus();
             
@@ -1533,6 +2008,10 @@ function stopAsyncCommand(commandName) {
             
             // 只从本地状态中移除
             asyncThreadManager.runningCommands.delete(commandName);
+            
+            // 清除数据回调
+            clearAsyncCommandCallback(connectionInstance, commandName);
+            
             refreshAsyncStatus();
             
             return true;
